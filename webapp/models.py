@@ -8,6 +8,12 @@ from datetime import datetime
 from webapp import db, app
 
 
+class BaseModel(db.Model):
+    __abstract__ = True
+    created_date = Column(DateTime, default=datetime.now)
+    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
 # ENUMS
 class Role(RoleEnum):
     ADMIN = "ADMIN"
@@ -40,23 +46,22 @@ class BeverageType(RoleEnum):
 
 
 # MODELS
-class User(db.Model, UserMixin):
+class User(BaseModel, UserMixin):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     username = Column(String(100), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False, unique=True)
     phone = Column(String(20), nullable=False, unique=True)
-    birth = Column(Integer, nullable=False)
-    address = Column(String(255), nullable=False)
-    avatar = Column(String(255), nullable=False,)
+    address = Column(String(255), nullable=True)
+    avatar = Column(String(255), nullable=False, )
     role = Column(Enum(Role), default=Role.CUSTOMER)
 
     reviews = relationship('Review', backref='user', lazy=True)
     orders = relationship('Order', backref='user', lazy=True)
 
 
-class Review(db.Model):
+class Review(BaseModel):
     id = Column(Integer, primary_key=True)
     content = Column(String(255), nullable=False)
     rate = Column(Integer, nullable=False)
@@ -66,9 +71,8 @@ class Review(db.Model):
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)
 
 
-class Order(db.Model):
+class Order(BaseModel):
     id = Column(Integer, primary_key=True)
-    created_date = Column(DateTime, default=datetime.now)
     status = Column(Enum(OrderStatus), default=OrderStatus.NEWORDER)
 
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
@@ -76,7 +80,7 @@ class Order(db.Model):
     payment = relationship('Payment', backref='order', uselist=False)
 
 
-class OrderDetail(db.Model):
+class OrderDetail(BaseModel):
     id = Column(Integer, primary_key=True)
     quantity = Column(Integer, default=1)
     note = Column(String(255))
@@ -85,20 +89,21 @@ class OrderDetail(db.Model):
     order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
 
 
-class Payment(db.Model):
+class Payment(BaseModel):
     id = Column(Integer, primary_key=True)
     total = Column(Float, default=0)
     status = Column(Enum(PaymentStatus), default=PaymentStatus.UNPAID)
 
     order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
 
-class CuisineType(db.Model):
+
+class CuisineType(BaseModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     cuisines = relationship('Cuisine', backref='cuisine_type', lazy=True)
 
 
-class Cuisine(db.Model):
+class Cuisine(BaseModel):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     price = Column(Float, nullable=False)
@@ -114,7 +119,7 @@ class Cuisine(db.Model):
     order_details = relationship('OrderDetail', backref='cuisine', lazy=True)
 
 
-class Restaurant(db.Model):
+class Restaurant(BaseModel):
     id = Column(Integer, primary_key=True)
     location = Column(String(255))
     type = Column(String(100))
@@ -122,6 +127,7 @@ class Restaurant(db.Model):
     introduce = Column(String(255))
 
     reviews = relationship('Review', backref='restaurant', lazy=True)
+
 
 if __name__ == '__main__':
     with app.app_context():
@@ -134,7 +140,6 @@ if __name__ == '__main__':
             password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
             email='admin@example.com',
             phone='0909000000',
-            birth=1990,
             address='123 Admin St',
             avatar='https://via.placeholder.com/150',
             role=Role.ADMIN

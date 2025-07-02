@@ -13,12 +13,13 @@ def home():
 def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
-        password = request.form.get('password')
         u = dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
             return redirect('/')  # dieu huong ve trang chu
     return render_template('login.html')
+    password = request.form.get('password')
+
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_process():
