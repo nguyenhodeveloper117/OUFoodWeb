@@ -2,7 +2,7 @@ from flask import redirect
 from flask_admin import Admin, expose, AdminIndexView, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, logout_user
-from webapp import app, db
+from app import app, db
 from models import User, CuisineType, Cuisine, Restaurant, Review, Order, OrderDetail, Payment
 from models import Role
 

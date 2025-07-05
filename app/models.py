@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from enum import Enum as RoleEnum
 from datetime import datetime
-from webapp import db, app
+from app import db, app
 
 
 class BaseModel(db.Model):
@@ -54,7 +54,7 @@ class User(BaseModel, UserMixin):
     email = Column(String(100), nullable=False, unique=True)
     phone = Column(String(20), nullable=False, unique=True)
     address = Column(String(255), nullable=True)
-    avatar = Column(String(255), nullable=False, )
+    avatar = Column(String(255), nullable=False, default='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg')
     role = Column(Enum(Role), default=Role.CUSTOMER)
 
     reviews = relationship('Review', backref='user', lazy=True)
@@ -141,7 +141,7 @@ if __name__ == '__main__':
             email='admin@example.com',
             phone='0909000000',
             address='123 Admin St',
-            avatar='https://via.placeholder.com/150',
+            avatar='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg',
             role=Role.ADMIN
         )
         db.session.add(admin)

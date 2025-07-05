@@ -1,24 +1,26 @@
 from flask_login import logout_user, login_user
-
-from webapp import app, login, dao
-from webapp import admin
+from app import app, login, dao
+from app import admin
 from flask import render_template, redirect, flash, request
+
+from dao import *
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
 @app.route("/login", methods=['get', 'post'])
 def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
+        password = request.form.get('password')
         u = dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
             return redirect('/')  # dieu huong ve trang chu
     return render_template('login.html')
-    password = request.form.get('password')
 
 
 @app.route("/login-admin", methods=['post'])
@@ -32,6 +34,7 @@ def login_admin_process():
         flash("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.", "danger")
     return redirect('/admin')
 
+
 @login.user_loader
 def get_user(user_id):
     return dao.get_user_by_id(user_id)
@@ -42,24 +45,30 @@ def logout_process():
     logout_user()
     return redirect('/login')
 
+
 @app.route('/register', methods=['get', 'post'])
 def register_process():
     err_msg = None
-    if request.method.__eq__('POST'):
+    if request.method == 'POST':
         confirm = request.form.get('confirm')
         password = request.form.get('password')
-        if password.__eq__(confirm):
-            data = request.form.copy()
-            del data['confirm']
 
+        if password == confirm:
+            data = {
+                'name': request.form.get('name'),
+                'username': request.form.get('username'),
+                'password': password,
+                'email': request.form.get('email'),
+                'phone': request.form.get('phone'),
+                'address': request.form.get('address')
+            }
             avatar = request.files.get('avatar')
-            dao.add_user(avatar=avatar, **data)
+            add_user(avatar=avatar, **data)
             return redirect('/login')
         else:
             err_msg = 'Mật khẩu KHÔNG khớp!'
 
     return render_template('register.html', err_msg=err_msg)
-
 
 
 if __name__ == "__main__":
