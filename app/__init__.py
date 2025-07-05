@@ -15,8 +15,8 @@ login = LoginManager(app=app)
 
 # Configuration
 cloudinary.config(
-    cloud_name = "",
-    api_key = "",
-    api_secret = "",
+    cloud_name="dnwyvuqej",
+    api_key="559324578186686",
+    api_secret="tjXbrfktUPN8lYMmE9SN-33QXjc",  # Click 'View API Keys' above to copy your API secret
     secure=True
 )

@@ -49,10 +49,10 @@ class BeverageType(RoleEnum):
 class User(BaseModel, UserMixin):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    username = Column(String(100), nullable=False, unique=True)
-    password = Column(String(100), nullable=False)
+    username = Column(String(50), nullable=False, unique=True)
+    password = Column(String(50), nullable=False)
     email = Column(String(100), nullable=False, unique=True)
-    phone = Column(String(20), nullable=False, unique=True)
+    phone = Column(String(10), nullable=False, unique=True)
     address = Column(String(255), nullable=True)
     avatar = Column(String(255), nullable=False, default='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg')
     role = Column(Enum(Role), default=Role.CUSTOMER)
