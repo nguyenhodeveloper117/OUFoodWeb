@@ -1,8 +1,8 @@
 from flask_login import logout_user, login_user
-from app import app, login, dao
+from app import app, login, dao, google
 from app import admin
-from flask import render_template, redirect, flash, request
-
+from flask import render_template, redirect, flash, request, url_for, session
+from datetime import  datetime
 from dao import *
 
 
@@ -69,6 +69,27 @@ def register_process():
             err_msg = 'Mật khẩu KHÔNG khớp!'
 
     return render_template('register.html', err_msg=err_msg)
+
+
+@app.route('/login/google')
+def login():
+    redirect_uri = url_for('auth', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/auth')
+def auth():
+    token = google.authorize_access_token()
+    user_info = google.get('userinfo').json()
+    session['user'] = user_info
+    print(user_info)
+    if dao.get_user_by_email(user_info['email']) is None:
+        add_user(name=user_info['name'], username=user_info['email'], password="123456", email=user_info['email'], phone=datetime.now().strftime("%H%M%S"))
+
+    u = dao.auth_user(username=user_info['email'], password="123456")
+    if u:
+        login_user(u)
+        return redirect('/')
+    return render_template("/register")
 
 
 if __name__ == "__main__":

@@ -194,3 +194,5 @@ cython_debug/
 .cursorindexingignore
 .idea
 .DS_Store
+
+app/config.json

@@ -35,3 +35,6 @@ def add_user(name, username, password, email, phone, address=None, avatar=None):
 
     db.session.add(u)
     db.session.commit()
+
+def get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
