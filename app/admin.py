@@ -45,47 +45,50 @@ class StatsView(AuthenticatedView):
 
 # ====== CUSTOM ADMIN VIEWS WITH SEARCH, FILTER, SORT ======
 class UserAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'name', 'username', 'email', 'phone', 'role']
-    column_searchable_list = ['name', 'username', 'email', 'phone']
+    column_list = ['id', 'name', 'username', 'password', 'email', 'phone', 'address', 'avatar', 'role', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'name', 'username', 'email', 'phone']
     column_filters = ['role']
-    column_sortable_list = ['id', 'name', 'username']
+    column_sortable_list = ['id', 'name', 'username', 'email', 'phone', 'role', 'created_date', 'updated_date']
 
 class CuisineAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'name', 'price', 'status', 'count', 'food_type', 'beverage_type', 'cuisine_type']
-    column_searchable_list = ['name', 'description']
-    column_filters = ['food_type', 'beverage_type', 'status']
-    column_sortable_list = ['id', 'price', 'count']
+    column_list = ['id', 'name', 'price', 'image', 'description', 'status', 'count', 'cuisine_type_id', 'food_type', 'beverage_type', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'name', 'description']
+    column_filters = ['status', 'food_type', 'beverage_type', 'cuisine_type_id']
+    column_sortable_list = ['id', 'name', 'price', 'count', 'cuisine_type_id', 'created_date', 'updated_date']
 
 class CuisineTypeAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'name']
-    column_searchable_list = ['name']
-    column_sortable_list = ['id', 'name']
+    column_list = ['id', 'name', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'name']
+    column_sortable_list = ['id', 'name', 'created_date', 'updated_date']
 
 class RestaurantAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'name', 'type', 'location']
-    column_searchable_list = ['name', 'location']
-    column_sortable_list = ['id', 'name']
+    column_list = ['id', 'location', 'type', 'name', 'introduce', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'name', 'location', 'type']
+    column_sortable_list = ['id', 'name', 'type', 'location', 'created_date', 'updated_date']
 
 class ReviewAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'content', 'rate', 'user_id', 'restaurant_id']
-    column_searchable_list = ['content']
+    column_list = ['id', 'content', 'rate', 'date', 'user_id', 'restaurant_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'content']
     column_filters = ['rate', 'user_id', 'restaurant_id']
-    column_sortable_list = ['id', 'rate']
+    column_sortable_list = ['id', 'rate', 'date', 'created_date', 'updated_date']
 
 class OrderAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'user_id', 'status', 'created_date']
+    column_list = ['id', 'status', 'user_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'user_id']
     column_filters = ['status', 'user_id']
-    column_sortable_list = ['id', 'created_date']
+    column_sortable_list = ['id', 'status', 'user_id', 'created_date', 'updated_date']
 
 class OrderDetailAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'order_id', 'cuisine_id', 'quantity', 'note']
-    column_filters = ['order_id', 'cuisine_id']
-    column_sortable_list = ['id', 'quantity']
+    column_list = ['id', 'quantity', 'note', 'cuisine_id', 'order_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'note']
+    column_filters = ['cuisine_id', 'order_id']
+    column_sortable_list = ['id', 'quantity', 'cuisine_id', 'order_id', 'created_date', 'updated_date']
 
 class PaymentAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'order_id', 'total', 'status']
+    column_list = ['id', 'total', 'status', 'order_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'order_id']
     column_filters = ['status']
-    column_sortable_list = ['id', 'total']
+    column_sortable_list = ['id', 'total', 'order_id', 'created_date', 'updated_date']
 
 # ====== KHỞI TẠO ADMIN ======
 admin = Admin(app=app, name='OUFood Admin', template_mode='bootstrap4', index_view=MyAdminIndexView())

@@ -102,6 +102,9 @@ class CuisineType(BaseModel):
     name = Column(String(100), nullable=False)
     cuisines = relationship('Cuisine', backref='cuisine_type', lazy=True)
 
+    def __str__(self):
+        return f"{self.id} - {self.name}"
+
 
 class Cuisine(BaseModel):
     id = Column(Integer, primary_key=True)
