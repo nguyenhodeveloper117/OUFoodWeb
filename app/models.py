@@ -8,10 +8,11 @@ from datetime import datetime
 from app import db, app
 
 
+# BASE MODEL
 class BaseModel(db.Model):
     __abstract__ = True
-    created_date = Column(DateTime, default=datetime.now)
-    updated_date = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created_date = db.Column(db.DateTime, default=datetime.now)
+    updated_date = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 # ENUMS
@@ -47,89 +48,114 @@ class BeverageType(RoleEnum):
 
 # MODELS
 class User(BaseModel, UserMixin):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    username = Column(String(50), nullable=False, unique=True)
-    password = Column(String(50), nullable=False)
-    email = Column(String(100), nullable=False, unique=True)
-    phone = Column(String(10), nullable=False, unique=True)
-    address = Column(String(255), nullable=True)
-    avatar = Column(String(255), nullable=False, default='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg')
-    role = Column(Enum(Role), default=Role.CUSTOMER)
+    __tablename__ = 'user'
+    __table_args__ = {'extend_existing': True}
 
-    reviews = relationship('Review', backref='user', lazy=True)
-    orders = relationship('Order', backref='user', lazy=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    password = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    phone = db.Column(db.String(10), nullable=False, unique=True)
+    address = db.Column(db.String(255), nullable=True)
+    avatar = db.Column(db.String(255), nullable=False, default='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg')
+    role = db.Column(db.Enum(Role), default=Role.CUSTOMER)
+
+    reviews = db.relationship('Review', backref='user', lazy=True)
+    orders = db.relationship('Order', backref='user', lazy=True)
 
 
 class Review(BaseModel):
-    id = Column(Integer, primary_key=True)
-    content = Column(String(255), nullable=False)
-    rate = Column(Integer, nullable=False)
-    date = Column(DateTime, default=datetime.now)
+    __tablename__ = 'review'
+    __table_args__ = {'extend_existing': True}
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(255), nullable=False)
+    rate = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.now)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False)
 
 
 class Order(BaseModel):
-    id = Column(Integer, primary_key=True)
-    status = Column(Enum(OrderStatus), default=OrderStatus.NEWORDER)
+    __tablename__ = 'order'
+    __table_args__ = {'extend_existing': True}
 
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    order_details = relationship('OrderDetail', backref='order', lazy=True)
-    payment = relationship('Payment', backref='order', uselist=False)
+    id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(db.Enum(OrderStatus), default=OrderStatus.NEWORDER)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    order_details = db.relationship('OrderDetail', backref='order', lazy=True)
+    payment = db.relationship('Payment', backref='order', uselist=False)
 
 
 class OrderDetail(BaseModel):
-    id = Column(Integer, primary_key=True)
-    quantity = Column(Integer, default=1)
-    note = Column(String(255))
+    __tablename__ = 'order_detail'
+    __table_args__ = {'extend_existing': True}
 
-    cuisine_id = Column(Integer, ForeignKey('cuisine.id'), nullable=False)
-    order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer, default=1)
+    note = db.Column(db.String(255))
+
+    cuisine_id = db.Column(db.Integer, db.ForeignKey('cuisine.id'), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
 
 
 class Payment(BaseModel):
-    id = Column(Integer, primary_key=True)
-    total = Column(Float, default=0)
-    status = Column(Enum(PaymentStatus), default=PaymentStatus.UNPAID)
+    __tablename__ = 'payment'
+    __table_args__ = {'extend_existing': True}
 
-    order_id = Column(Integer, ForeignKey('order.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    total = db.Column(db.Float, default=0)
+    status = db.Column(db.Enum(PaymentStatus), default=PaymentStatus.UNPAID)
+
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
 
 
 class CuisineType(BaseModel):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    cuisines = relationship('Cuisine', backref='cuisine_type', lazy=True)
+    __tablename__ = 'cuisine_type'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    cuisines = db.relationship('Cuisine', backref='cuisine_type', lazy=True)
 
     def __str__(self):
         return f"{self.id} - {self.name}"
 
 
 class Cuisine(BaseModel):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    price = Column(Float, nullable=False)
-    image = Column(String(255))
-    description = Column(String(255))
-    status = Column(Boolean, default=True)
-    count = Column(Integer, default=0)
+    __tablename__ = 'cuisine'
+    __table_args__ = {'extend_existing': True}
 
-    cuisine_type_id = Column(Integer, ForeignKey('cuisine_type.id'), nullable=False)
-    food_type = Column(Enum(FoodType))
-    beverage_type = Column(Enum(BeverageType))
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    image = db.Column(db.String(255))
+    description = db.Column(db.String(255))
+    status = db.Column(db.Boolean, default=True)
+    count = db.Column(db.Integer, default=0)
 
-    order_details = relationship('OrderDetail', backref='cuisine', lazy=True)
+    cuisine_type_id = db.Column(db.Integer, db.ForeignKey('cuisine_type.id'), nullable=False)
+    food_type = db.Column(db.Enum(FoodType))
+    beverage_type = db.Column(db.Enum(BeverageType))
+
+    order_details = db.relationship('OrderDetail', backref='cuisine', lazy=True)
 
 
 class Restaurant(BaseModel):
-    id = Column(Integer, primary_key=True)
-    location = Column(String(255))
-    type = Column(String(100))
-    name = Column(String(100))
-    introduce = Column(String(255))
+    __tablename__ = 'restaurant'
+    __table_args__ = {'extend_existing': True}
 
-    reviews = relationship('Review', backref='restaurant', lazy=True)
+    id = db.Column(db.Integer, primary_key=True)
+    location = db.Column(db.String(255))
+    type = db.Column(db.String(100))
+    name = db.Column(db.String(100))
+    introduce = db.Column(db.String(255))
+    image = db.Column(db.String(255))
+
+    reviews = db.relationship('Review', backref='restaurant', lazy=True)
 
 
 if __name__ == '__main__':
@@ -150,8 +176,8 @@ if __name__ == '__main__':
         db.session.add(admin)
 
         # Tạo restaurant
-        res1 = Restaurant(name='Bún Bò Huế', type='Quán ăn', location='TP.HCM', introduce='Đặc sản Huế ngon')
-        res2 = Restaurant(name='Cơm Tấm Ba Ghiền', type='Nhà hàng', location='Quận 3', introduce='Cơm tấm nổi tiếng')
+        res1 = Restaurant(name='Bún Bò Huế', type='Quán ăn', location='TP.HCM', introduce='Đặc sản Huế ngon', image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_vlt9jj.jpg',)
+        res2 = Restaurant(name='Cơm Tấm Ba Ghiền', type='Nhà hàng', location='Quận 3', introduce='Cơm tấm nổi tiếng', image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_1_haf8dl.jpg')
         db.session.add_all([res1, res2])
 
         # Tạo cuisine type

@@ -10,7 +10,7 @@ def auth_user(username, password, role=None):
                           User.password.__eq__(password))
 
     if role:
-        u = u.filter(User.user_role.__eq__(role))
+        u = u.filter(User.role.__eq__(role))
 
     return u.first()
 

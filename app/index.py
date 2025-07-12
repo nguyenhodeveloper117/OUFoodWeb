@@ -1,15 +1,41 @@
 from flask_login import logout_user, login_user
-from app import app, login, dao, google
-from app import admin
+from app import app, login, dao, google, admin
 from flask import render_template, redirect, flash, request, url_for, session
 from datetime import  datetime
-from dao import *
+from models import Restaurant
+from dao import add_user
 
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    keyword = request.args.get('keyword', '')
+    type_filter = request.args.get('type')
+    location_filter = request.args.get('location')
 
+    query = Restaurant.query
+    if keyword:
+        query = query.filter(Restaurant.name.ilike(f'%{keyword}%'))
+    if type_filter:
+        query = query.filter(Restaurant.type == type_filter)
+    if location_filter:
+        query = query.filter(Restaurant.location == location_filter)
+
+    restaurants = query.all()
+
+    # Tạm thời dựa vào dữ liệu có sẵn để tạo filter types và locations
+    types = [r.type for r in Restaurant.query.with_entities(Restaurant.type).distinct()]
+    locations = [r.location for r in Restaurant.query.with_entities(Restaurant.location).distinct()]
+
+    return render_template('index.html',
+                           restaurants=restaurants,
+                           types=types,
+                           locations=locations)
+
+
+@app.route('/restaurant/<int:restaurant_id>')
+def restaurant_detail(restaurant_id):
+    r = Restaurant.query.get_or_404(restaurant_id)
+    return render_template('restaurant_cuisine.html', restaurant=r)
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():

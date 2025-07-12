@@ -62,7 +62,7 @@ class CuisineTypeAdminView(AuthenticatedAdminView):
     column_sortable_list = ['id', 'name', 'created_date', 'updated_date']
 
 class RestaurantAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'location', 'type', 'name', 'introduce', 'created_date', 'updated_date']
+    column_list = ['id', 'location', 'type', 'name', 'introduce', 'image', 'created_date', 'updated_date']
     column_searchable_list = ['id', 'name', 'location', 'type']
     column_sortable_list = ['id', 'name', 'type', 'location', 'created_date', 'updated_date']
 
