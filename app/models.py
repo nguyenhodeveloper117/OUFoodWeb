@@ -61,9 +61,8 @@ class User(BaseModel, UserMixin):
     avatar = db.Column(db.String(255), nullable=False, default='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg')
     role = db.Column(db.Enum(Role), default=Role.CUSTOMER)
 
-    reviews = db.relationship('Review', backref='user', lazy=True)
-    orders = db.relationship('Order', backref='user', lazy=True)
-
+    def __str__(self):
+        return f"{self.id} - {self.name}"
 
 class Review(BaseModel):
     __tablename__ = 'review'
@@ -77,6 +76,12 @@ class Review(BaseModel):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False)
 
+    user = db.relationship('User', backref='reviews')
+    restaurant = db.relationship('Restaurant', backref='reviews')
+
+    def __str__(self):
+        return f"{self.id} - {self.user.name} đánh giá {self.restaurant.name}"
+
 
 class Order(BaseModel):
     __tablename__ = 'order'
@@ -86,8 +91,10 @@ class Order(BaseModel):
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.NEWORDER)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    order_details = db.relationship('OrderDetail', backref='order', lazy=True)
-    payment = db.relationship('Payment', backref='order', uselist=False)
+    user = db.relationship('User', backref='orders')
+
+    def __str__(self):
+        return f"Order {self.id} - User {self.user.name}"
 
 
 class OrderDetail(BaseModel):
@@ -101,6 +108,12 @@ class OrderDetail(BaseModel):
     cuisine_id = db.Column(db.Integer, db.ForeignKey('cuisine.id'), nullable=False)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
 
+    cuisine = db.relationship('Cuisine', backref='order_details')
+    order = db.relationship('Order', backref='order_details')
+
+    def __str__(self):
+        return f"{self.id} - {self.cuisine.name}"
+
 
 class Payment(BaseModel):
     __tablename__ = 'payment'
@@ -111,6 +124,10 @@ class Payment(BaseModel):
     status = db.Column(db.Enum(PaymentStatus), default=PaymentStatus.UNPAID)
 
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    order = db.relationship('Order', backref='payment')
+
+    def __str__(self):
+        return f"Payment {self.id} - Total: {self.total} - {self.status.value}"
 
 
 class CuisineType(BaseModel):
@@ -119,7 +136,9 @@ class CuisineType(BaseModel):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    cuisines = db.relationship('Cuisine', backref='cuisine_type', lazy=True)
+
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False)
+    restaurant = db.relationship('Restaurant', backref='cuisine_types')
 
     def __str__(self):
         return f"{self.id} - {self.name}"
@@ -138,10 +157,12 @@ class Cuisine(BaseModel):
     count = db.Column(db.Integer, default=0)
 
     cuisine_type_id = db.Column(db.Integer, db.ForeignKey('cuisine_type.id'), nullable=False)
+    cuisine_type = db.relationship('CuisineType', backref='cuisines')
     food_type = db.Column(db.Enum(FoodType))
     beverage_type = db.Column(db.Enum(BeverageType))
 
-    order_details = db.relationship('OrderDetail', backref='cuisine', lazy=True)
+    def __str__(self):
+        return f"{self.id} - {self.name}"
 
 
 class Restaurant(BaseModel):
@@ -155,14 +176,17 @@ class Restaurant(BaseModel):
     introduce = db.Column(db.String(255))
     image = db.Column(db.String(255))
 
-    reviews = db.relationship('Review', backref='restaurant', lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='restaurants')
 
+    def __str__(self):
+        return f"{self.id} - {self.name}"
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        # Tạo user admin
+        # Tạo user admin (vừa là admin, vừa là manager của nhà hàng)
         admin = User(
             name='Admin',
             username='admin',
@@ -174,19 +198,35 @@ if __name__ == '__main__':
             role=Role.ADMIN
         )
         db.session.add(admin)
+        db.session.flush()  # để lấy admin.id
 
-        # Tạo restaurant
-        res1 = Restaurant(name='Bún Bò Huế', type='Quán ăn', location='TP.HCM', introduce='Đặc sản Huế ngon', image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_vlt9jj.jpg',)
-        res2 = Restaurant(name='Cơm Tấm Ba Ghiền', type='Nhà hàng', location='Quận 3', introduce='Cơm tấm nổi tiếng', image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_1_haf8dl.jpg')
+        # Tạo restaurant gắn với admin (user_id)
+        res1 = Restaurant(
+            name='Bún Bò Huế',
+            type='Quán ăn',
+            location='TP.HCM',
+            introduce='Đặc sản Huế ngon',
+            image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_vlt9jj.jpg',
+            user_id=admin.id
+        )
+        res2 = Restaurant(
+            name='Cơm Tấm Ba Ghiền',
+            type='Nhà hàng',
+            location='Quận 3',
+            introduce='Cơm tấm nổi tiếng',
+            image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_1_haf8dl.jpg',
+            user_id=admin.id
+        )
         db.session.add_all([res1, res2])
+        db.session.flush()  # lấy res1.id và res2.id
 
-        # Tạo cuisine type
-        ct1 = CuisineType(name='Món chính')
-        ct2 = CuisineType(name='Đồ uống')
+        # Tạo cuisine type gắn với restaurant (res1)
+        ct1 = CuisineType(name='Món chính', restaurant_id=res1.id)
+        ct2 = CuisineType(name='Đồ uống', restaurant_id=res1.id)
         db.session.add_all([ct1, ct2])
-        db.session.flush()  # để lấy id
+        db.session.flush()
 
-        # Tạo cuisine
+        # Tạo cuisine gắn với cuisine type
         c1 = Cuisine(
             name='Bún Bò',
             price=45000,
@@ -228,3 +268,4 @@ if __name__ == '__main__':
 
         db.session.commit()
         print("Đã tạo dữ liệu mẫu thành công!")
+
