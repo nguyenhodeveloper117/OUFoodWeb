@@ -230,7 +230,7 @@ if __name__ == '__main__':
         c1 = Cuisine(
             name='Bún Bò',
             price=45000,
-            image='https://example.com/bunbo.jpg',
+            image='https://hellodanang.vn/wp-content/uploads/2024/10/top-10-quan-bun-bo-hue-ngon-o-da-nang-ngon-chat-luong-1729312176.jpg',
             description='Đậm vị Huế',
             count=10,
             cuisine_type_id=ct1.id,
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         c2 = Cuisine(
             name='Trà Đào',
             price=15000,
-            image='https://example.com/tradao.jpg',
+            image='https://cf.shopee.vn/file/8ead015bf67f00cc507c9eb2f9d274f6',
             description='Mát lạnh',
             count=20,
             cuisine_type_id=ct2.id,

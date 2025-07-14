@@ -34,7 +34,18 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary border-2 border-secondary py-3 px-4 rounded-pill w-100 text-white">
+                                <select name="cuisine_type" class="form-select rounded-pill border-2 border-secondary">
+                                    <option value="">Cuisine Types</option>
+                                    {% for ct in cuisine_types %}
+                                    <option value="{{ ct.id }}" {% if request.args.get('cuisine_type') == ct.id|string %}selected{% endif %}> {{ ct.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 mt-5">
+                                <button type="submit"
+                                        class="btn btn-primary border-2 border-secondary py-3 px-4 rounded-pill w-100 text-white">
                                     Tìm kiếm
                                 </button>
                             </div>

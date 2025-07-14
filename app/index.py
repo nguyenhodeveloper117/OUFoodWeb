@@ -2,40 +2,75 @@ from flask_login import logout_user, login_user
 from app import app, login, dao, google, admin
 from flask import render_template, redirect, flash, request, url_for, session
 from datetime import  datetime
-from models import Restaurant
+from models import Restaurant, CuisineType
 from dao import add_user
-
 
 @app.route("/")
 def home():
     keyword = request.args.get('keyword', '')
     type_filter = request.args.get('type')
     location_filter = request.args.get('location')
+    cuisine_type_id = request.args.get('cuisine_type')
 
     query = Restaurant.query
+
     if keyword:
         query = query.filter(Restaurant.name.ilike(f'%{keyword}%'))
     if type_filter:
         query = query.filter(Restaurant.type == type_filter)
     if location_filter:
         query = query.filter(Restaurant.location == location_filter)
+    if cuisine_type_id:
+        query = query.join(Restaurant.cuisine_types).filter(CuisineType.id == cuisine_type_id)
 
     restaurants = query.all()
 
-    # Tạm thời dựa vào dữ liệu có sẵn để tạo filter types và locations
     types = [r.type for r in Restaurant.query.with_entities(Restaurant.type).distinct()]
     locations = [r.location for r in Restaurant.query.with_entities(Restaurant.location).distinct()]
+    cuisine_types = CuisineType.query.all()
 
     return render_template('index.html',
                            restaurants=restaurants,
                            types=types,
-                           locations=locations)
+                           locations=locations,
+                           cuisine_types=cuisine_types)
 
 
 @app.route('/restaurant/<int:restaurant_id>')
 def restaurant_detail(restaurant_id):
     r = Restaurant.query.get_or_404(restaurant_id)
-    return render_template('restaurant_cuisine.html', restaurant=r)
+
+    # Lấy các cuisine từ tất cả cuisine_type liên kết
+    cuisines = []
+    for ct in r.cuisine_types:
+        cuisines.extend(ct.cuisines)
+
+    keyword = request.args.get('keyword', '').strip().lower()
+    food_type = request.args.get('food_type')
+    beverage_type = request.args.get('beverage_type')
+
+    food_cuisines = [
+        c for c in cuisines
+        if c.food_type and
+           (not keyword or keyword in c.name.lower()) and
+           (not food_type or c.food_type.name == food_type)
+    ]
+
+    beverage_cuisines = [
+        c for c in cuisines
+        if c.beverage_type and
+           (not keyword or keyword in c.name.lower()) and
+           (not beverage_type or c.beverage_type.name == beverage_type)
+    ]
+
+    return render_template('restaurant_cuisine.html',
+                           restaurant=r,
+                           food_cuisines=food_cuisines,
+                           beverage_cuisines=beverage_cuisines,
+                           keyword=keyword,
+                           food_type=food_type,
+                           beverage_type=beverage_type)
+
 
 @app.route("/login", methods=['get', 'post'])
 def login_process():
