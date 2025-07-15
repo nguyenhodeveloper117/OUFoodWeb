@@ -1,0 +1,96 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h1 class="text-center text-danger mt-1">THỐNG KÊ - BÁO CÁO</h1>
+
+<div class="row">
+    <div class="col-md-7 col-12">
+        <table class="table">
+            <tr>
+                <th>Id</th>
+                <th>Ten san pham</th>
+                <th>Doanh thu</th>
+            </tr>
+            {% for s in stats %}
+            <tr>
+                <td>{{ s[0] }}</td>
+                <td>{{ s[1] }}</td>
+                <td>{{ s[2] }} VND</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="col-md-5 col-12">
+        <canvas id="myChart"></canvas>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7 col-12">
+        <table class="table">
+            <tr>
+                <th>Thoi gian</th>
+                <th>Doanh thu</th>
+            </tr>
+            {% for s in stats2 %}
+            <tr>
+                <td>{{ s[0] }}</td>
+                <td>{{ s[1] }} VND</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="col-md-5 col-12">
+        <canvas id="myChart2"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    function draw(ctx, data, labels) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: '# Doanh thu',
+                data: data,
+                borderWidth: 1,
+                backgroundColor: ['red', 'green', 'blue', 'gold', 'brown']
+              }]
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+    }
+
+    let data = [];
+    let labels = [];
+
+    let data2 = [];
+    let labels2 = [];
+
+    {% for s in stats %}
+    data.push({{ s[2] }})
+    labels.push('{{ s[1] }}')
+    {% endfor %}
+
+    {% for s in stats2 %}
+    data2.push({{ s[1] }})
+    labels2.push({{ s[0] }})
+    {% endfor %}
+
+    window.onload = function() {
+        const ctx = document.getElementById('myChart');
+        draw(ctx, data, labels);
+
+        const ctx2 = document.getElementById('myChart2');
+        draw(ctx2, data2, labels2);
+    }
+</script>
+{% endblock %}

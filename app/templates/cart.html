@@ -1,0 +1,119 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<!-- Cart Page Start -->
+<div style="margin-top: 13%;" class="cart-info">
+    <h1 class="text-success text-center mb-3">Giỏ hàng</h1>
+
+    {% if 'cart' in session %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Món ăn</th>
+                <th scope="col">Tên món</th>
+                <th scope="col">Giá</th>
+                <th scope="col">Số lượng</th>
+                <th scope="col">Tổng</th>
+                <th scope="col"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for c in session['cart'].values() %}
+            <tr id="cart{{ c.id }}">
+                <td class="d-none">
+                    <span class="cuisine-count">{{c.count}}</span>
+                </td>
+                <th scope="row">
+                    <div class="d-flex align-items-center">
+                        <img src="{{c.image}}" class="img-fluid me-5 rounded-circle"
+                             style="width: 80px; height: 80px;" alt="">
+                    </div>
+                </th>
+                <td>
+                    <p class="mb-0 mt-4">{{c.name}}</p>
+                </td>
+                <td>
+                    <p class="mb-0 mt-4 price">{{"{:,.0f}".format(c.price)}} VNĐ</p>
+                </td>
+                <td>
+                    <div class="input-group quantity mt-4" style="width: 100px;">
+                        <div class="input-group-btn">
+                            <button class="btn btn-sm btn-minus rounded-circle bg-light border">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                        </div>
+                        <input type="text" max="5" class="form-control form-control-sm text-center border-0"
+                               value="{{c.quantity}}" data-id="{{ c.id }}" onblur="handleUpdateCart({{ c.id }}, this)">
+                        <div class="input-group-btn">
+                            <button class="btn btn-sm btn-plus rounded-circle bg-light border">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <p class="mb-0 mt-4"><span class="total-price">{{"{:,.0f}".format(c.price*c.quantity)}}</span>
+                        VNĐ
+                    </p>
+                </td>
+                <td>
+                    <button class="btn btn-md rounded-circle bg-light border mt-4"
+                            onclick="deleteProductInCart({{ c.id }})">
+                        <i class="fa fa-times text-danger"></i>
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    <div>
+                        Ghi chú
+                    </div>
+
+                </th>
+                <th colspan="5">
+                    <textarea class="form-control" placeholder="..."></textarea>
+                </th>
+            </tr>
+            {%endfor%}
+            </tbody>
+        </table>
+    </div>
+    <div class="row g-4 order-info">
+        <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
+            <div class="bg-light rounded">
+                <div class="p-4">
+                    <h2 class="mb-4 fw-bold">Thông tin đơn hàng</h2>
+                    <div class="d-flex justify-content-between">
+                        <h5 class="mb-0 me-4">Tổng số lượng:</h5>
+                        <p class="mb-0 cart-counter">{{cart_stats.total_quantity}}</p>
+                    </div>
+                </div>
+                <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
+                    <h5 class="mb-0 ps-4 me-4">Tổng số tiền</h5>
+                    <p class="mb-0 pe-4">
+                        <span class="cart-amount">{{"{:,.0f}".format(cart_stats.total_amount)}}
+                    </span> VNĐ
+                    </p>
+                </div>
+                {% if current_user.is_authenticated %}
+                <button class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4"
+                        type="button">Đặt hàng
+                </button>
+                {% else %}
+                <div class="p-3 text-center">
+                    <p>Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán </p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+    {%else%}
+    <div class="text-center my-5">
+        <span class="fs-3">Không có món ăn nào trong giỏ hàng</span>
+    </div>
+    {% endif %}
+</div>
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<!-- Cart Page End -->
+{% endblock %}
