@@ -1,9 +1,10 @@
 from flask_login import logout_user, login_user
-from app import app, login, dao, google, admin
-from flask import render_template, redirect, flash, request, url_for, session
-from datetime import  datetime
+from app import app, login, dao, google, admin, utils
+from flask import render_template, redirect, flash, request, url_for, session, jsonify
+from datetime import datetime
 from models import Restaurant, CuisineType
 from dao import add_user
+
 
 @app.route("/")
 def home():
@@ -80,7 +81,9 @@ def login_process():
         u = dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
-            return redirect('/')  # dieu huong ve trang chu
+
+            next = request.args.get('next')
+            return redirect(next if next else '/')
     return render_template('login.html')
 
 
@@ -137,6 +140,7 @@ def login():
     redirect_uri = url_for('auth', _external=True)
     return google.authorize_redirect(redirect_uri)
 
+
 @app.route('/auth')
 def auth():
     token = google.authorize_access_token()
@@ -144,13 +148,86 @@ def auth():
     session['user'] = user_info
     print(user_info)
     if dao.get_user_by_email(user_info['email']) is None:
-        add_user(name=user_info['name'], username=user_info['email'], password="123456", email=user_info['email'], phone=datetime.now().strftime("%H%M%S"))
+        add_user(name=user_info['name'], username=user_info['email'], password="123456", email=user_info['email'],
+                 phone=datetime.now().strftime("%H%M%S"))
 
     u = dao.auth_user(username=user_info['email'], password="123456")
     if u:
         login_user(u)
         return redirect('/')
     return render_template("/register")
+
+
+@app.context_processor
+def common_response():
+    return {
+        'cart_stats': {
+            'total_quantity': utils.stats_cart_quantity(session.get('cart'))
+        }
+    }
+
+
+@app.route('/cart')
+def cart():
+    context = common_response()
+    context['cart_stats'].update({
+        'total_amount': utils.stats_cart_amount(session.get('cart'))
+    })
+    return render_template('cart.html', **context)
+
+
+@app.route("/api/carts", methods=['post'])
+def add_to_cart():
+    cart = session.get('cart')
+    if not cart:
+        cart = {}
+
+    id = str(request.json.get('id'))
+    name = request.json.get('name')
+    price = request.json.get('price')
+    image = request.json.get('image')
+    count = request.json.get('count')
+
+    if id in cart:
+        cart[id]['quantity'] = cart[id]['quantity'] + 1
+    else:
+        cart[id] = {
+            "id": id,
+            "name": name,
+            "price": price,
+            "image": image,
+            "count": count,
+            "quantity": 1
+        }
+
+    session['cart'] = cart
+    return jsonify(utils.stats_cart_quantity(cart))
+
+
+@app.route('/api/carts/<product_id>', methods=['put'])
+def update_cart(product_id):
+    cart = session.get('cart')
+    if cart and product_id in cart:
+        quantity = request.json.get('quantity')
+        cart[product_id]['quantity'] = int(quantity)
+
+        session['cart'] = cart
+
+    return jsonify(utils.stats_cart(cart))
+
+
+@app.route('/api/carts/<product_id>', methods=['delete'])
+def delete_product_in_cart(product_id):
+    cart = session.get('cart')
+    if cart and product_id in cart:
+        del cart[product_id]
+
+        if cart:
+            session['cart'] = cart
+        else:
+            session.pop('cart', None)
+
+    return jsonify(utils.stats_cart(cart))
 
 
 if __name__ == "__main__":

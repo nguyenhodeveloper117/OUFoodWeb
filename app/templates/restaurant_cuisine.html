@@ -13,18 +13,25 @@
                 <div class="col-md-2">
                     <select name="food_type" class="form-select rounded-pill mb-2 mb-md-0">
                         <option value="">-- Loại món ăn --</option>
-                        <option value="APPETIZER" {{'selected' if food_type=='APPETIZER' }}>Khai vị</option>
-                        <option value="MAIN" {{'selected' if food_type=='MAIN' }}>Món chính</option>
-                        <option value="DESERT" {{'selected' if food_type=='DESERT' }}>Tráng miệng</option>
+                        <option value="APPETIZER" {{
+                        'selected' if food_type=='APPETIZER' }}>Khai vị</option>
+                        <option value="MAIN" {{
+                        'selected' if food_type=='MAIN' }}>Món chính</option>
+                        <option value="DESERT" {{
+                        'selected' if food_type=='DESERT' }}>Tráng miệng</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <select name="beverage_type" class="form-select rounded-pill mb-2 mb-md-0">
                         <option value="">-- Loại nước --</option>
-                        <option value="SOFTDRINK" {{'selected' if beverage_type=='SOFTDRINK' }}>Nước ngọt</option>
-                        <option value="DRINKINGWATER" {{'selected' if beverage_type=='DRINKINGWATER' }}>Nước suối</option>
-                        <option value="COFFEE" {{'selected' if beverage_type=='COFFEE' }}>Cà phê</option>
-                        <option value="JUICE" {{'selected' if beverage_type=='JUICE' }}>Nước ép</option>
+                        <option value="SOFTDRINK" {{
+                        'selected' if beverage_type=='SOFTDRINK' }}>Nước ngọt</option>
+                        <option value="DRINKINGWATER" {{
+                        'selected' if beverage_type=='DRINKINGWATER' }}>Nước suối</option>
+                        <option value="COFFEE" {{
+                        'selected' if beverage_type=='COFFEE' }}>Cà phê</option>
+                        <option value="JUICE" {{
+                        'selected' if beverage_type=='JUICE' }}>Nước ép</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -54,9 +61,10 @@
                             <p class="small text-muted">{{ c.description }}</p>
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <p class="text-dark fs-6 fw-bold mb-0">{{ '{:,.0f}'.format(c.price) }} VND</p>
-                                <a href="#" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                <button href="#" class="btn border border-secondary rounded-pill px-3 text-primary"
+                                        onclick="addToCart({{c.id}}, '{{c.name}}', {{c.price}}, '{{c.image}}', {{c.count}})">
                                     <i class="fa fa-shopping-bag me-2 text-primary"></i> Thêm
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -88,9 +96,10 @@
                             <p class="small text-muted">{{ c.description }}</p>
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <p class="text-dark fs-6 fw-bold mb-0">{{ '{:,.0f}'.format(c.price) }} VND</p>
-                                <a href="#" class="btn border border-info rounded-pill px-3 text-primary">
+                                <button href="#" class="btn border border-info rounded-pill px-3 text-primary"
+                                        onclick="addToCart({{c.id}}, '{{c.name}}', {{c.price}}, '{{c.image}}', {{c.count}})">
                                     <i class="fa fa-shopping-bag me-2 text-primary"></i> Thêm
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -102,4 +111,5 @@
         </div>
     </div>
 </div>
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 {% endblock %}
