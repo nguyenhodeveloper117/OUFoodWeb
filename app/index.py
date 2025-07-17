@@ -2,7 +2,7 @@ from flask_login import logout_user, login_user
 from app import app, login, dao, google, admin, utils
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
-from models import Restaurant, CuisineType
+from models import Restaurant, CuisineType, Role
 from dao import add_user
 
 
@@ -81,9 +81,11 @@ def login_process():
         u = dao.auth_user(username=username, password=password)
         if u:
             login_user(u)
-
-            next = request.args.get('next')
-            return redirect(next if next else '/')
+            if u.role == Role.MANAGER:
+                return redirect("/manager/view/order")
+            else:
+                next = request.args.get('next')
+                return redirect(next if next else '/')
         flash("Tên đăng nhập hoặc mật khẩu không chính xác", "danger")
     return render_template('login.html')
 
@@ -230,6 +232,16 @@ def delete_product_in_cart(product_id):
 
     return jsonify(utils.stats_cart(cart))
 
+@app.route("/manager/view/order")
+def view_order():
+    orders = dao.get_order()
+    print(orders)
+    return render_template("manager/order_accept.html", orders=orders)
+
+@app.route("/manager/view/oder_detail/<order_id>")
+def update_status_order(order_id):
+    order_details = dao.get_order_detail(order_id)
+    return render_template("manager/order_detail.html", order_details=order_details)
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)

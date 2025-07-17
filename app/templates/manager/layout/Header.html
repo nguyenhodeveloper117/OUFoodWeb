@@ -1,0 +1,61 @@
+<!-- Navbar start -->
+<div class="container-fluid fixed-top">
+    <div class="container topbar bg-primary d-none d-lg-block">
+        <div class="d-flex justify-content-between">
+            <div class="top-info ps-2">
+                <small class="me-3"><i class="fas fa-map-marker-alt me-2 text-secondary"></i>
+                    <a href="#" class="text-white">529 Nguyễn Bình</a></small>
+                <small class="me-3"><i class="fas fa-envelope me-2 text-secondary"></i>
+                    <a href="#" class="text-white">thanhdanhk2004@gmail.com</a>
+                </small>
+            </div>
+
+        </div>
+    </div>
+    <div class="container px-0">
+        <nav class="navbar navbar-light bg-white navbar-expand-xl">
+            <a href="/" class="navbar-brand"><h1 class="text-primary display-6">OUFood</h1></a>
+            <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarCollapse">
+                <span class="fa fa-bars text-primary"></span>
+            </button>
+            <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
+                <div class="navbar-nav mx-auto">
+                    <a href="/manager/view/order" class="nav-item nav-link active">Danh sách đơn hàng</a>
+                    <a href="#" class="nav-item nav-link">Quản lý món ăn</a>
+                    <a href="#" class="nav-item nav-link">Thống kê doanh thu</a>
+                </div>
+
+                <div class="d-flex m-3 me-0">
+                    {% if current_user.is_authenticated %}
+                    <div class="dropdown my-auto">
+                        <a href="#" class="dropdown-toggle d-flex align-items-center" role="button" id="dropdownMenuLink"
+                           data-bs-toggle="dropdown" aria-expanded="false" data-bs-toggle="dropdown">
+                            <i class="fas fa-user fa-2x"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-2"
+                             aria-labelledby="dropdownMenuLink">
+                            <div class="d-flex align-items-center flex-column">
+                                <img style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden;"
+                                     src="{{current_user.avatar}}"/>
+                                <div class="text-center my-3">
+                                    {{current_user.name}}
+                                </div>
+                            </div>
+                            <a class="dropdown-item" href="#">Quản lý tài khoản</a>
+                            <a class="dropdown-item" href="/#">Lịch sử mua hàng</a>
+                            <hr class="dropdown-divider">
+                            <a class="dropdown-item" href="/logout">Đăng xuất</a>
+                        </div>
+                    </div>
+                    {%else%}
+                    <a href="/login" class="my-auto">
+                        <i class="fas fa-user fa-2x"></i>
+                    </a>
+                    {%endif%}
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>
+<!-- Navbar End -->
