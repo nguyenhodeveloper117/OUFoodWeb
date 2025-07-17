@@ -2,6 +2,13 @@
 {% block content %}
 <div style="margin-top: 13%;">
     <h1 class="text-center text-danger mt-1">ĐĂNG NHẬP</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
     <form method="post">
         <div class="form-floating mb-3 mt-3">
             <input type="text" class="form-control" id="username" placeholder="Tên đăng nhập" name="username">

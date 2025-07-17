@@ -84,6 +84,7 @@ def login_process():
 
             next = request.args.get('next')
             return redirect(next if next else '/')
+        flash("Tên đăng nhập hoặc mật khẩu không chính xác", "danger")
     return render_template('login.html')
 
 
