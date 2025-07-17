@@ -58,19 +58,26 @@ function addToCart(id, name, price, image, count=100) {
     })
 }
 
+function isInteger(value) {
+  return Number.isInteger(Number(value));
+}
+
 function handleUpdateCart(productId, obj) {
      const cartRow = document.getElementById(`cart${productId}`);
      const count = cartRow.querySelector('.cuisine-count')
 
-     if(obj.value > parseInt(count.innerText)){
-        obj.value = parseInt(count.innerText)
-     } else if (obj.value <= 0){
+     if(isInteger(obj.value)){
+         if(obj.value > parseInt(count.innerText)){
+            obj.value = parseInt(count.innerText)
+         } else if (obj.value <= 0){
+            obj.value = 1
+         }
+     } else {
         obj.value = 1
      }
 
      updateCart(productId, obj)
 }
-
 function updateCart(productId, obj) {
     fetch(`/api/carts/${productId}`, {
         method: "put",
