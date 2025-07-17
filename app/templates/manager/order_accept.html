@@ -1,0 +1,45 @@
+{% extends 'manager/layout/base.html' %}
+
+{% block content %}
+
+<!-- Table -->
+<div class="container mt-5 pt-5">
+    <table class="table table-bordered order-table text-center align-middle">
+        <thead>
+        <tr>
+            <th>STT</th>
+            <th>Người đặt</th>
+            <th>Thời gian đặt hàng</th>
+            <th>Số tiền thanh toán</th>
+            <th>Phương thức thanh toán</th>
+            <th>Trạng thái đơn hàng</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td>{{order.id}}</td>
+                    <td>{{order.name}}</td>
+                    <td>{{order.created_date}}</td>
+                    <td>{{ "{:,.0f}".format(order.total) }} VND</td>
+                    <td>Thanh toán online</td>
+                    {% if order.status.name == "PROCESSING" %}
+                        <td>Đang xử lý</td>
+                    {%elif order.status.name == "NEWORDER" %}
+                        <td>Đơn hàng mới</td>
+                    {%else%}
+                        <td>Đã xử lý</td>
+                    {%endif%}
+                    <td>
+                        <div>
+                            <a href="/manager/view/oder_detail/{{order.id}}">Xem</a>
+                        </div>
+                    </td>
+                </tr>
+            {%endfor%}
+        </tbody>
+    </table>
+</div>
+
+{%endblock%}

@@ -89,7 +89,6 @@ class Order(BaseModel):
 
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.NEWORDER)
-
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref='orders')
 
@@ -197,7 +196,18 @@ if __name__ == '__main__':
             avatar='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg',
             role=Role.ADMIN
         )
-        db.session.add(admin)
+
+        manager = User(
+            name='manager',
+            username='ThanhDan',
+            password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
+            email='ThanhDan@example.com',
+            phone='0909000001',
+            address='123 Admin Stree',
+            avatar='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg',
+            role=Role.MANAGER
+        )
+        db.session.add_all([admin, manager])
         db.session.flush()  # để lấy admin.id
 
         # Tạo restaurant gắn với admin (user_id)
