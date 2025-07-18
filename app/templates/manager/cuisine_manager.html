@@ -1,0 +1,40 @@
+{% extends 'manager/layout/base.html' %}
+{% block content %}
+<!-- Table -->
+<div class="container mt-5 pt-5">
+    <div>
+        <a href="/manager/add/cuisine/{{cuisines[0].restaurant_id}}" type="button" class="btn btn-success mb-3" >Thêm món ăn</a>
+    </div>
+    <table class="table table-bordered order-table text-center align-middle">
+        <thead>
+        <tr>
+            <th>Mã món</th>
+            <th>Tên món</th>
+            <th>Hình ảnh</th>
+            <th>Giá tiền</th>
+            <th>Số lượng còn lại</th>
+            <th>Xử lý</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for cuisine in cuisines %}
+                <tr id="row_{{cuisine.cuisine_id}}">
+                    <td>{{cuisine.cuisine_id}}</td>
+                    <td>{{cuisine.cuisine_name}}</td>
+                    <td><img src={{cuisine.image}} style="width: 80px; height: 80px" /></td>
+                    <td>{{ "{:,.0f}".format(cuisine.price) }} VND</td>
+                    <td>{{cuisine.count}}</td>
+                    <td style="width: 350px">
+                        <button type="button" class="btn btn-primary me-3 ">Cập nhật số lượng</button>
+                        <button type="button" class="btn btn-danger me-3 "
+                                onclick="cuisineRemove({{cuisine.cuisine_id}})">
+                            Xóa món ăn</button>
+                    </td>
+                </tr>
+            {%endfor%}
+        </tbody>
+    </table>
+
+</div>
+
+{%endblock%}

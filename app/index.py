@@ -5,7 +5,6 @@ from datetime import datetime
 from models import Restaurant, CuisineType, Role
 from dao import add_user
 
-
 @app.route("/")
 def home():
     keyword = request.args.get('keyword', '')
@@ -119,7 +118,6 @@ def register_process():
     if request.method == 'POST':
         confirm = request.form.get('confirm')
         password = request.form.get('password')
-
         if password == confirm:
             data = {
                 'name': request.form.get('name'),
@@ -235,13 +233,50 @@ def delete_product_in_cart(product_id):
 @app.route("/manager/view/order")
 def view_order():
     orders = dao.get_order()
-    print(orders)
     return render_template("manager/order_accept.html", orders=orders)
 
 @app.route("/manager/view/oder_detail/<order_id>")
 def update_status_order(order_id):
     order_details = dao.get_order_detail(order_id)
-    return render_template("manager/order_detail.html", order_details=order_details)
+    return render_template("manager/order_detail.html", order_details=order_details, count=len(order_details))
+
+@app.route("/api/update/status/order", methods=['PATCH'])
+def update_status_order_approve():
+    order_id = request.json.get('order_id')
+    status = request.json.get('status')
+    result = dao.update_order(order_id, status)
+    print(result)
+    return jsonify({'result':result})
+
+@app.route("/manager/cuisine/manager")
+def view_cuisine_manager():
+    cuisines = dao.get_cuisine(1)
+    return render_template("manager/cuisine_manager.html", cuisines=cuisines)
+                           
+@app.route("/api/manager/delete/cuisine", methods=['DELETE'])
+def cuisine_delete():
+    cuisine_id = request.json.get("cuisine_id")
+    result = dao.delete_cuisine(cuisine_id)
+    print(result)
+    return jsonify({"result":result})
+
+@app.route("/manager/add/cuisine/<restaurant_id>", methods=['POST', 'GET'])
+def cuisine_add(restaurant_id):
+    err_msg = None
+    cuisines_type = dao.get_cuisine_type(restaurant_id)
+    if request.method == "POST":
+        cuisine_name = request.form.get("name")
+        cuisine_description = request.form.get("description")
+        cuisine_price = request.form.get("price")
+        cuisine_type = request.form.get("cuisine_type")
+        cuisine_avatar = request.files.get("cuisine_avatar")
+        if cuisine_name is None or cuisine_description is None or cuisine_price is None or cuisine_type is None or cuisine_avatar is None:
+            print("Hello")
+            err_msg = "vui lòng điền đầy đủ thông tin món ăn"
+            return render_template("manager/cuisine_add.html", cuisines_type=cuisines_type, err_msg=err_msg)
+        dao.cuisine_add(cuisine_name, cuisine_price, cuisine_avatar, cuisine_description, cuisine_type)
+        return redirect("/manager/cuisine/manager")
+    return render_template("manager/cuisine_add.html", cuisines_type=cuisines_type, restaurant_id= restaurant_id)
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
