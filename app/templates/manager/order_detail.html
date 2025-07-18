@@ -2,9 +2,11 @@
 
 {% block content %}
 <div class="container">
-    <h6>Mã đơn hàng: <strong>DH0006</strong></h6>
-    <h6>Thời gian đặt hàng: <strong>17/07/2025 12:15:30</strong></h6>
-    <h6>Số tiền thanh toán: <strong>120.000 VND</strong></h6>
+    {%if count >0 %}
+    <h6>Mã đơn hàng: {{order_details[0].order_id}}</h6>
+    <h6>Thời gian đặt hàng: {{order_details[0].order_created_date}}</h6>
+    <h6>Số tiền thanh toán: {{ "{:,.0f}".format(order_details[0].total) }} VND</h6>
+    {%endif%}
 
     <div class="table-container mt-3">
         <table class="table table-bordered text-center align-middle">
@@ -21,12 +23,16 @@
             <tbody>
                 {% for i in order_details %}
                     <tr>
-                        <td>1</td>
-                        <td>MA0001</td>
-                        <td>Bánh canh</td>
-                        <td>x2</td>
-                        <td>30.000 VND</td>
-                        <td>Không bỏ ớt</td>
+                        <td>{{i.order_detail_id}}</td>
+                        <td>{{i.cuisine_id}}</td>
+                        <td>{{i.name}}</td>
+                        <td>{{i.quantity}}</td>
+                        <td>{{ "{:,.0f}".format(i.price) }} VND</td>
+                        {%if i.note == None%}
+                            <td>Không có</td>
+                        {%else%}
+                            <td>{{i.note}}</td>
+                        {%endif%}
                     </tr>
                 {% endfor %}
             </tbody>
@@ -34,9 +40,21 @@
     </div>
 
     <div class="mt-3">
-        <button class="btn btn-success me-3 ">Xác nhận đơn</button>
-        <button class="btn btn-primary">Hoàn thành đơn</button>
+         {%if count > 0 %}
+             {%if order_details[0].status.name == "NEWORDER"%}
+                <button type="button" id="btn_approve" data-order-id={{order_details[0].order_id}} class="btn btn-success me-3 ">Xác nhận đơn</button>
+            {%else%}
+                <button type="button" class="btn btn-success me-3 " disabled>Xác nhận đơn</button>
+            {%endif%}
+            {%if order_details[0].status.name == "PROCESSING"%}
+                <button type="button" id="btn_processed" data-order-id={{order_details[0].order_id}} class="btn btn-primary">Hoàn thành đơn</button>
+            {%else%}
+                <button type="button" class="btn btn-primary me-3" disabled>Hoàn thành đơn</button>
+            {%endif%}
+         {%endif%}
+         <button type="button" id="btn_comeback" class="btn btn-danger">Quay lại</button>
     </div>
 </div>
+
 
 {%endblock%}
