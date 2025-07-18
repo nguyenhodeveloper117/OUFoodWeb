@@ -2,8 +2,9 @@ import hashlib
 import cloudinary.uploader
 from app import app, db
 
-from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType
+from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType, Review
 from sqlalchemy.orm import aliased
+from sqlalchemy import  func
 
 
 def auth_user(username, password, role=None):
@@ -56,8 +57,8 @@ def get_order():
         User, Order.user_id == User.id
     ).join(
         Payment, Payment.order_id == Order.id
-    ).order_by(Order.id))
-
+    )
+    .order_by(Order.id))
 
 def get_order_detail(order_id):
     return (
@@ -148,3 +149,25 @@ def cuisine_add(name, price, image, description, cuisine_type):
 
     db.session.add(cuisine)
     db.session.commit()
+
+def update_quantity(cuisine_id, quantity):
+    cuisine = Cuisine.query.filter(Cuisine.id == cuisine_id).first()
+    if cuisine:
+        cuisine.count = quantity
+        db.session.commit()
+        return True
+    return False
+
+def get_review(user_id):
+    return  (
+        db.session.query(
+            func.date_format(Review.created_date, "%Y-%m").label('month'),
+            func.avg(Review.rate).label('avg_rate')
+        )
+        .join(Restaurant, Restaurant.id == Review.restaurant_id)
+        .join(User, User.id == Restaurant.user_id)
+        .filter(User.id == user_id)
+        .group_by(func.date_format(Review.created_date, "%Y-%m"))
+        .order_by(func.date_format(Review.created_date, "%Y-%m"))
+        .all()
+)

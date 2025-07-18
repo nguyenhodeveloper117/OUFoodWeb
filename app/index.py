@@ -1,4 +1,4 @@
-from flask_login import logout_user, login_user
+from flask_login import logout_user, login_user, current_user
 from app import app, login, dao, google, admin, utils
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
@@ -250,7 +250,8 @@ def update_status_order_approve():
 
 @app.route("/manager/cuisine/manager")
 def view_cuisine_manager():
-    cuisines = dao.get_cuisine(1)
+    cuisines = dao.get_cuisine(current_user.id)
+    print(cuisines)
     return render_template("manager/cuisine_manager.html", cuisines=cuisines)
                            
 @app.route("/api/manager/delete/cuisine", methods=['DELETE'])
@@ -277,6 +278,23 @@ def cuisine_add(restaurant_id):
         dao.cuisine_add(cuisine_name, cuisine_price, cuisine_avatar, cuisine_description, cuisine_type)
         return redirect("/manager/cuisine/manager")
     return render_template("manager/cuisine_add.html", cuisines_type=cuisines_type, restaurant_id= restaurant_id)
+
+@app.route("/api/update/quantity", methods=['PUT'])
+def update_quantity_cuisine():
+    cuisine_id = request.json.get('cuisine_id')
+    quantity = request.json.get('quantity')
+    quantity = int(quantity)
+    result = dao.update_quantity(cuisine_id, quantity)
+    return jsonify({'result':result})
+
+
+@app.route("/manager/reputation/statistics")
+def reputation_statistics():
+    if current_user.is_authenticated:
+        reviews = dao.get_review(current_user.id)
+        print(reviews)
+    return render_template("manager/reputation_statistics.html", reviews=reviews)
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)

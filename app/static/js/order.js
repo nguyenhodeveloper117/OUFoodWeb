@@ -77,4 +77,34 @@ function cuisineRemove(cuisine_id){
     }
 }
 
+let currentItemId = null; // Biến toàn cục lưu id đang chỉnh
 
+function openQuantityModal(itemId) {
+    currentItemId = itemId;
+    const quantity_input = document.getElementById('quantityInput')
+    quantity_input.value = document.getElementById(`cuisine_count_${itemId}`).textContent.trim()
+    const modal = new bootstrap.Modal(document.getElementById('quantityModal'));
+    modal.show();
+}
+
+function confirm(){
+    const quantity_input = document.getElementById('quantityInput').value
+    fetch("/api/update/quantity", {
+        method: "PUT",
+        body: JSON.stringify({
+            'cuisine_id':currentItemId,
+            'quantity': quantity_input
+        }),
+        headers:{
+            'Content-Type':'application/json'
+        }
+    }).then(res => res.json().then(data => {
+        if(data.result == true){
+            document.getElementById(`cuisine_count_${currentItemId}`).textContent = quantity_input;
+        }
+    }))
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('quantityModal'));
+    modal.hide();
+
+}
