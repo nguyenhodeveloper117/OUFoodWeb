@@ -1,0 +1,120 @@
+{% extends 'manager/layout/base.html' %}
+{% block content %}
+<div class="subheader-container mb-0" style="margin-top:10rem;">
+    <h2 class="text-center my-2 mb-0">Báo cáo thống kê độ uy tín nhà hàng</h2>
+</div>
+<div class="flex-column mt-3">
+    <div class="d-flex justify-content-end">
+
+        <div class="d-flex">
+
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-7 col-12">
+            <table class="table table-striped table-bordered table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Tháng đánh giá</th>
+
+                    <th>Số sao trung bình</th>
+                </tr>
+                </thead>
+                <tbody id="statsTableBody-3">
+                {% if not reviews %}
+                <tr>
+                    <td colspan="3" class="text-center">Không có dữ liệu cho lựa chọn này.</td>
+                </tr>
+                {% else %}
+                {% for r in reviews %}
+                <tr>
+                    <td>{{ r.month }}</td>
+                    <td>{{ r.avg_rate }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-5 col-12 mt-0">
+            <canvas id="myChart-3"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Dữ liệu từ server
+    let reviewLabels = [];
+    let chartData = [];
+
+    // Gán dữ liệu từ Flask vào biến JS
+    {% for r in reviews %}
+        reviewLabels.push("Tháng {{ r.month }}");  // Nhà hàng - Tháng
+        chartData.push({{ r.avg_rate }}); // Trung bình sao
+    {% endfor %}
+
+    let chartInstance3;
+
+    function createChart3(type) {
+        const ctx = document.getElementById('myChart-3').getContext('2d');
+
+        // Phá biểu đồ cũ nếu có
+        if (chartInstance3) {
+            chartInstance3.destroy();
+        }
+
+        chartInstance3 = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: reviewLabels,
+                datasets: [{
+                    label: "Độ uy tín (số sao trung bình)",
+                    data: chartData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ": " + context.raw.toFixed(2) + " ★";
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function (value) {
+                                return value + " ★";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChart3() {
+        const chartType = document.querySelector('input[name="chartType"]:checked').value;
+        createChart3(chartType);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        createChart3('bar');
+    });
+</script>
+{%endblock%}

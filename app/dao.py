@@ -2,7 +2,9 @@ import hashlib
 import cloudinary.uploader
 from app import app, db
 
-from models import User, Order, Payment, OrderDetail, Cuisine
+from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType, Review
+from sqlalchemy.orm import aliased
+from sqlalchemy import  func
 
 
 def auth_user(username, password, role=None):
@@ -55,20 +57,22 @@ def get_order():
         User, Order.user_id == User.id
     ).join(
         Payment, Payment.order_id == Order.id
-    ).order_by(Order.id))
-
+    )
+    .order_by(Order.id))
 
 def get_order_detail(order_id):
     return (
         db.session.query(
-            Order.id,
-            Order.created_date,
-            Payment.created_date,
+            Order.id.label("order_id"),
+            Order.created_date.label("order_created_date"),
+            Order.status,
+            Payment.total,
             OrderDetail.note,
-            Cuisine.id,
-            Cuisine.name,
+            OrderDetail.id.label("order_detail_id"),
             OrderDetail.quantity,
-            Cuisine.price
+            Cuisine.id.label("cuisine_id"),
+            Cuisine.name,
+            Cuisine.price,
         ).join(
             Payment, Payment.order_id == Order.id
         ).join(
@@ -78,3 +82,92 @@ def get_order_detail(order_id):
         ).filter(Order.id == order_id)
         .order_by(OrderDetail.id).all()
     )
+
+def update_order(order_id, status):
+    order = Order.query.filter(order_id == Order.id).first()
+    if order:
+        if status == "Processing":
+            order.status = OrderStatus.PROCESSING
+        else:
+            order.status = OrderStatus.COMPLETE
+        db.session.commit()
+        return True
+    return False
+
+def get_cuisine(user_id):
+    return (
+        db.session.query(
+            User.id.label("user_id"),
+            Restaurant.id.label("restaurant_id"),
+            Restaurant.name.label("restaurant_name"),
+            CuisineType.name.label("cuisine_type_name"),
+            Cuisine.id.label("cuisine_id"),
+            Cuisine.name.label("cuisine_name"),
+            Cuisine.image,
+            Cuisine.price,
+            Cuisine.count
+        ).join(
+            Restaurant, Restaurant.user_id == User.id
+        ).join(
+            CuisineType, CuisineType.restaurant_id == Restaurant.id
+        ).join(
+            Cuisine, Cuisine.cuisine_type_id == CuisineType.id
+        ).filter(User.id == user_id)
+        .all()
+    )
+
+def delete_cuisine(cuisine_id):
+    cuisine = Cuisine.query.filter(Cuisine.id == cuisine_id).first()
+    if cuisine:
+        db.session.delete(cuisine)
+        db.session.commit()
+        return True
+    return False
+
+def get_cuisine_type(restaurant_id):
+    return (
+        db.session.query(
+            Restaurant.id.label("restaurant_id"),
+            CuisineType.name,
+            CuisineType.id.label("cuisine_type_id")
+        ).join(
+            CuisineType, CuisineType.restaurant_id == Restaurant.id
+        ).filter(Restaurant.id == restaurant_id)
+        .all()
+    )
+
+def cuisine_add(name, price, image, description, cuisine_type):
+    cuisine = Cuisine(
+        name = name,
+        price = price,
+        description = description,
+        cuisine_type_id = cuisine_type
+    )
+    if image:
+        res = cloudinary.uploader.upload(image)
+        cuisine.image = res.get('secure_url')
+
+    db.session.add(cuisine)
+    db.session.commit()
+
+def update_quantity(cuisine_id, quantity):
+    cuisine = Cuisine.query.filter(Cuisine.id == cuisine_id).first()
+    if cuisine:
+        cuisine.count = quantity
+        db.session.commit()
+        return True
+    return False
+
+def get_review(user_id):
+    return  (
+        db.session.query(
+            func.date_format(Review.created_date, "%Y-%m").label('month'),
+            func.avg(Review.rate).label('avg_rate')
+        )
+        .join(Restaurant, Restaurant.id == Review.restaurant_id)
+        .join(User, User.id == Restaurant.user_id)
+        .filter(User.id == user_id)
+        .group_by(func.date_format(Review.created_date, "%Y-%m"))
+        .order_by(func.date_format(Review.created_date, "%Y-%m"))
+        .all()
+)

@@ -217,7 +217,7 @@ if __name__ == '__main__':
             location='TP.HCM',
             introduce='Đặc sản Huế ngon',
             image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_vlt9jj.jpg',
-            user_id=admin.id
+            user_id=manager.id
         )
         res2 = Restaurant(
             name='Cơm Tấm Ba Ghiền',
@@ -225,7 +225,7 @@ if __name__ == '__main__':
             location='Quận 3',
             introduce='Cơm tấm nổi tiếng',
             image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_1_haf8dl.jpg',
-            user_id=admin.id
+            user_id=manager.id
         )
         db.session.add_all([res1, res2])
         db.session.flush()  # lấy res1.id và res2.id
