@@ -1,16 +1,10 @@
 from datetime import timedelta
-
 from flask import redirect, request
 from flask_admin import Admin, expose, AdminIndexView, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, logout_user
-<<<<<<< Updated upstream
-from app import app, db,decorators
-=======
+from app import app, db, decorators
 from sqlalchemy import func
-
-from app import app, db
->>>>>>> Stashed changes
 from models import *
 
 # Trang chủ admin
@@ -99,6 +93,8 @@ class StatsView(AuthenticatedView):
                            from_date=from_date.strftime('%Y-%m-%d'),
                            to_date=to_date.strftime('%Y-%m-%d'),
                            order_count=order_count)
+        return self.render('admin/stats.html')
+
 # ====== CUSTOM ADMIN VIEWS WITH SEARCH, FILTER, SORT ======
 class UserAdminView(AuthenticatedAdminView):
     column_list = ['id', 'name', 'username', 'password', 'email', 'phone', 'address', 'avatar', 'role', 'created_date', 'updated_date']
