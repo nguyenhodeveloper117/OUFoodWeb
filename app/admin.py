@@ -2,12 +2,13 @@ from flask import redirect
 from flask_admin import Admin, expose, AdminIndexView, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user, logout_user
-from app import app, db
+from app import app, db,decorators
 from models import *
 
 # Trang chủ admin
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
+    @decorators.logged_in_customer
     def index(self):
         return self.render('admin/index.html')
 
