@@ -1,9 +1,20 @@
-from flask_login import logout_user, login_user, current_user
-from app import app, login, dao, google, admin, utils
+from flask_login import logout_user, login_user, current_user, login_required
+from app import app, login, dao, google, admin, utils, decorators
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
 from models import Restaurant, CuisineType, Role
 from dao import add_user
+
+
+@app.errorhandler(401)
+def error_401(error):
+    return render_template("error/401.html"), 401
+
+
+@app.errorhandler(403)
+def error_403(error):
+    return render_template("error/403.html"), 403
+
 
 @app.route("/")
 def home():
@@ -73,6 +84,7 @@ def restaurant_detail(restaurant_id):
 
 
 @app.route("/login", methods=['get', 'post'])
+@decorators.logged_in_user
 def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
@@ -113,6 +125,7 @@ def logout_process():
 
 
 @app.route('/register', methods=['get', 'post'])
+@decorators.logged_in_user
 def register_process():
     err_msg = None
     if request.method == 'POST':
@@ -137,12 +150,14 @@ def register_process():
 
 
 @app.route('/login/google')
+@decorators.logged_in_user
 def login():
     redirect_uri = url_for('auth', _external=True)
     return google.authorize_redirect(redirect_uri)
 
 
 @app.route('/auth')
+@decorators.logged_in_user
 def auth():
     token = google.authorize_access_token()
     user_info = google.get('userinfo').json()
@@ -230,38 +245,50 @@ def delete_product_in_cart(product_id):
 
     return jsonify(utils.stats_cart(cart))
 
+
 @app.route("/manager/view/order")
+@decorators.manager_required
 def view_order():
     orders = dao.get_order()
     return render_template("manager/order_accept.html", orders=orders)
 
+
 @app.route("/manager/view/oder_detail/<order_id>")
+@decorators.manager_required
 def update_status_order(order_id):
     order_details = dao.get_order_detail(order_id)
     return render_template("manager/order_detail.html", order_details=order_details, count=len(order_details))
 
+
 @app.route("/api/update/status/order", methods=['PATCH'])
+@decorators.manager_required
 def update_status_order_approve():
     order_id = request.json.get('order_id')
     status = request.json.get('status')
     result = dao.update_order(order_id, status)
     print(result)
-    return jsonify({'result':result})
+    return jsonify({'result': result})
+
 
 @app.route("/manager/cuisine/manager")
+@decorators.manager_required
 def view_cuisine_manager():
     cuisines = dao.get_cuisine(current_user.id)
     print(cuisines)
     return render_template("manager/cuisine_manager.html", cuisines=cuisines)
-                           
+
+
 @app.route("/api/manager/delete/cuisine", methods=['DELETE'])
+@decorators.manager_required
 def cuisine_delete():
     cuisine_id = request.json.get("cuisine_id")
     result = dao.delete_cuisine(cuisine_id)
     print(result)
-    return jsonify({"result":result})
+    return jsonify({"result": result})
+
 
 @app.route("/manager/add/cuisine/<restaurant_id>", methods=['POST', 'GET'])
+@decorators.manager_required
 def cuisine_add(restaurant_id):
     err_msg = None
     cuisines_type = dao.get_cuisine_type(restaurant_id)
@@ -277,18 +304,21 @@ def cuisine_add(restaurant_id):
             return render_template("manager/cuisine_add.html", cuisines_type=cuisines_type, err_msg=err_msg)
         dao.cuisine_add(cuisine_name, cuisine_price, cuisine_avatar, cuisine_description, cuisine_type)
         return redirect("/manager/cuisine/manager")
-    return render_template("manager/cuisine_add.html", cuisines_type=cuisines_type, restaurant_id= restaurant_id)
+    return render_template("manager/cuisine_add.html", cuisines_type=cuisines_type, restaurant_id=restaurant_id)
+
 
 @app.route("/api/update/quantity", methods=['PUT'])
+@decorators.manager_required
 def update_quantity_cuisine():
     cuisine_id = request.json.get('cuisine_id')
     quantity = request.json.get('quantity')
     quantity = int(quantity)
     result = dao.update_quantity(cuisine_id, quantity)
-    return jsonify({'result':result})
+    return jsonify({'result': result})
 
 
 @app.route("/manager/reputation/statistics")
+@decorators.manager_required
 def reputation_statistics():
     if current_user.is_authenticated:
         reviews = dao.get_review(current_user.id)
