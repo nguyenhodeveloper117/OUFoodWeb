@@ -93,7 +93,6 @@ class StatsView(AuthenticatedView):
                            from_date=from_date.strftime('%Y-%m-%d'),
                            to_date=to_date.strftime('%Y-%m-%d'),
                            order_count=order_count)
-        return self.render('admin/stats.html')
 
 # ====== CUSTOM ADMIN VIEWS WITH SEARCH, FILTER, SORT ======
 class UserAdminView(AuthenticatedAdminView):
