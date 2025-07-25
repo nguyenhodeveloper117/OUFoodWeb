@@ -1,0 +1,31 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div style="margin-top: 13%;" class="min-vh-100">
+    {% if vnp_ResponseCode == '00' %}
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">&#9989; {{title}}</h2>
+            <div class="alert alert-success mb-3 text-center" role="alert">
+                Cảm ơn bạn vì đã đặt hàng.
+            </div>
+            <a href="/" class="col-12 btn border-secondary px-4 py-2 text-primary">Trang chủ</a>
+        </div>
+    </div>
+    {% elif vnp_ResponseCode == '24' %}
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title mb-3 text-center">
+                <i class="fas fa-info-circle" style="color: #058df5;"></i> {{title}}
+            </h2>
+            <div class="text-center mb-3">
+                Bạn đã hủy thanh toán hóa đơn
+            </div>
+            <a href="/payment" class="col-12 btn border-secondary px-4 py-2 text-primary">Thanh toán lại</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
