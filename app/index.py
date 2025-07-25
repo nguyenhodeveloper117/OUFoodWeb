@@ -1,5 +1,5 @@
 from flask_login import logout_user, login_user, current_user, login_required
-from app import app, login, dao, google, admin, utils, decorators
+from app import app, login, dao, google, admin, utils, decorators, db
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
 from app.vnpay import vnpay
@@ -287,6 +287,20 @@ def payment():
             return render_template("payment.html", title="Lỗi", result="Không thể xử lý đơn hàng",
                                    errors=validation_errors)
 
+        receiver_name = request.form.get("person")
+        receiver_phone = request.form.get("phone")
+        receiver_address = request.form.get("address")
+
+        cart = {
+            **cart,
+            "receiver": {
+                "receiver_name": receiver_name,
+                "receiver_phone": receiver_phone,
+                "receiver_address": receiver_address
+            }
+        }
+        session['cart'] = cart
+
         if request.form.get("pay") == "vnpay":
             order_id = request.form.get("order_id")
             order_type = request.form.get("order_type")
@@ -339,13 +353,16 @@ def payment_return():
 
                 # ???????????
                 items = list(cart['items'].values())
-                cuisine = Cuisine.query.get(items[0]['id'])
+                receiver = cart['receiver']
+                cuisine = db.session.get(Cuisine, items[0]['id'])
                 restaurant_id = cuisine.cuisine_type.restaurant_id
 
                 order = dao.add_order(
                     user_id=current_user.id,
                     restaurant_id=restaurant_id,
-                    cart_items=items
+                    cart_items=items,
+                    receiver=receiver,
+                    payment_ref=order_id
                 )
 
                 session.pop('cart', None)

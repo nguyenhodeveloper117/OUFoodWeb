@@ -66,17 +66,17 @@
 
                 <div class="form-group mb-3">
                     <label class="form-label" for="person">Tên người nhận</label>
-                    <input class="form-control" type="text" id="person" value="{{current_user.name}}"/>
+                    <input class="form-control" type="text" id="person" name="person" value="{{current_user.name}}" required/>
                 </div>
 
                 <div class="form-group mb-3">
                     <label class="form-label" for="phone">SĐT</label>
-                    <input class="form-control" type="text" id="phone" value="{{current_user.phone}}"/>
+                    <input class="form-control" type="text" id="phone" name="phone" value="{{current_user.phone}}" required/>
                 </div>
 
                 <div class="form-group mb-3">
                     <label class="form-label" for="address">Địa chỉ người nhận</label>
-                    <input class="form-control" type="text" id="address" value="{{current_user.address}}"/>
+                    <input class="form-control" type="text" id="address" name="address" value="{{current_user.address}}" required/>
                 </div>
 
                 <hr/>

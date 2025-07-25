@@ -183,12 +183,15 @@ def get_review(user_id):
     )
 
 
-def add_order(user_id, restaurant_id, cart_items):
+def add_order(user_id, restaurant_id, cart_items, receiver, payment_ref):
     try:
         new_order = Order(
             user_id=user_id,
             restaurant_id=restaurant_id,
-            status=OrderStatus.NEWORDER
+            status=OrderStatus.NEWORDER,
+            receiver_name=receiver['receiver_name'],
+            receiver_phone=receiver['receiver_phone'],
+            receiver_address=receiver['receiver_address']
         )
         db.session.add(new_order)
         db.session.flush()
@@ -196,7 +199,7 @@ def add_order(user_id, restaurant_id, cart_items):
         total = 0
 
         for item in cart_items:
-            cuisine = Cuisine.query.get(item['id'])
+            cuisine = db.session.get(Cuisine, item['id'])
             quantity = item.get('quantity')
             note = item.get('note', '')
 
@@ -214,7 +217,8 @@ def add_order(user_id, restaurant_id, cart_items):
         payment = Payment(
             order_id=new_order.id,
             total=total,
-            status=PaymentStatus.PAID
+            status=PaymentStatus.PAID,
+            payment_ref=payment_ref
         )
         db.session.add(payment)
         db.session.commit()
@@ -229,7 +233,7 @@ def add_order(user_id, restaurant_id, cart_items):
 def validate_cart_items(cart_items):
     errors = []
     for item in cart_items:
-        cuisine = Cuisine.query.get(item['id'])
+        cuisine = db.session.get(Cuisine, item['id'])
         if not cuisine:
             errors.append(f"Món ăn ID {item['id']} không tồn tại.")
             continue
