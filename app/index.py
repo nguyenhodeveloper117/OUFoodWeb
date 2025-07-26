@@ -1,5 +1,5 @@
 from flask_login import logout_user, login_user, current_user, login_required
-from app import app, login, dao, google, admin, utils, decorators, db
+from app import app, login, dao, google, admin, utils, decorators, db, momo
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
 from app.vnpay import vnpay
@@ -301,15 +301,15 @@ def payment():
         }
         session['cart'] = cart
 
-        if request.form.get("pay") == "vnpay":
-            order_id = request.form.get("order_id")
-            order_type = request.form.get("order_type")
-            amount = float(request.form.get("amount"))
-            order_desc = request.form.get("order_desc")
-            bank_code = request.form.get("bank_code")
-            language = request.form.get("language")
-            ipaddr = get_client_ip(request)
+        order_id = request.form.get("order_id")
+        amount = float(request.form.get("amount"))
+        order_type = request.form.get("order_type")
+        order_desc = request.form.get("order_desc")
+        bank_code = request.form.get("bank_code")
+        language = request.form.get("language")
+        ipaddr = get_client_ip(request)
 
+        if request.form.get("pay") == "vnpay":
             vnp = vnpay()
             vnp.requestData["vnp_Version"] = "2.1.0"
             vnp.requestData["vnp_Command"] = "pay"
@@ -333,12 +333,14 @@ def payment():
                 app.config["VNPAY_PAYMENT_URL"], app.config["VNPAY_HASH_SECRET_KEY"]
             )
             return redirect(vnpay_payment_url)
+        elif request.form.get("pay") == "momo":
+            return redirect(momo.get_payment_url(order_id, amount))
 
-        return redirect("/cart")
+    return redirect("/cart")
 
 
-@app.route("/payment_return", methods=["GET"])
-def payment_return():
+@app.route("/vnpay_payment_return", methods=["GET"])
+def vnpay_payment_return():
     inputData = request.args
     if inputData:
         vnp = vnpay()
@@ -368,7 +370,7 @@ def payment_return():
                 session.pop('cart', None)
 
                 return render_template(
-                    "payment_return.html",
+                    "vnpay_payment_return.html",
                     title="Thanh toán thành công",
                     result="Success",
                     order_id=order_id,
@@ -379,7 +381,7 @@ def payment_return():
             elif vnp_ResponseCode == "24":
 
                 return render_template(
-                    "payment_return.html",
+                    "vnpay_payment_return.html",
                     title="Hủy thanh toán",
                     result="Canceled",
                     order_id=order_id,
@@ -388,8 +390,8 @@ def payment_return():
                 )
             else:
                 return render_template(
-                    "payment_return.html",
-                    title="Payment result",
+                    "vnpay_payment_return.html",
+                    title="Lỗi thanh toán",
                     result="Error",
                     order_id=order_id,
                     amount=amount,
@@ -397,7 +399,7 @@ def payment_return():
                 )
         else:
             return render_template(
-                "payment_return.html",
+                "vnpay_payment_return.html",
                 title="Payment result",
                 result="Error",
                 order_id=order_id,
@@ -406,7 +408,56 @@ def payment_return():
                 msg="Invalid checksum",
             )
     return render_template(
-        "payment_return.html", title="Kết quả thanh toán", result=""
+        "vnpay_payment_return.html", title="Kết quả thanh toán", result=""
+    )
+
+
+@app.route("/momo_payment_return", methods=["GET"])
+def momo_payment_return():
+    data = request.args.to_dict()
+    if data:
+        order_id = data.get("orderId")
+        amount = int(data.get("amount"))
+        result_code = data.get("resultCode")
+
+        if result_code == '0':
+            cart = session.get('cart')
+
+            # ???????????
+            items = list(cart['items'].values())
+            receiver = cart['receiver']
+            cuisine = db.session.get(Cuisine, items[0]['id'])
+            restaurant_id = cuisine.cuisine_type.restaurant_id
+
+            order = dao.add_order(
+                user_id=current_user.id,
+                restaurant_id=restaurant_id,
+                cart_items=items,
+                receiver=receiver,
+                payment_ref=order_id
+            )
+
+            session.pop('cart', None)
+
+            return render_template(
+                "momo_payment_return.html",
+                title="Thanh toán thành công",
+                result="Success",
+                order_id=order_id,
+                amount=amount,
+                result_code=result_code,
+            )
+        else:
+            return render_template(
+                "momo_payment_return.html",
+                title="Lỗi thanh toán",
+                result="Error",
+                order_id=order_id,
+                amount=amount,
+                result_code=result_code,
+            )
+    return render_template(
+        "momo_payment_return.html", title="Kết quả thanh toán", result=""
     )
 
 
@@ -491,4 +542,4 @@ def reputation_statistics():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(host="localhost", port=8000, debug=True)
