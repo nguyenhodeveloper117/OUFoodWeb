@@ -1,9 +1,11 @@
 from flask_login import logout_user, login_user, current_user, login_required
-from app import app, login, dao, google, admin, utils, decorators
+from app import app, login, dao, google, admin, utils, decorators, db, momo
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
-from models import Restaurant, CuisineType, Role
+from app.vnpay import vnpay
+from models import Restaurant, CuisineType, Role, Cuisine
 from dao import add_user
+import uuid
 
 
 @app.errorhandler(401)
@@ -196,7 +198,10 @@ def cart():
 def add_to_cart():
     cart = session.get('cart')
     if not cart:
-        cart = {}
+        cart = {
+            "order_id": str(uuid.uuid4()),
+            "items": {}
+        }
 
     id = str(request.json.get('id'))
     name = request.json.get('name')
@@ -204,16 +209,17 @@ def add_to_cart():
     image = request.json.get('image')
     count = request.json.get('count')
 
-    if id in cart:
-        cart[id]['quantity'] = cart[id]['quantity'] + 1
+    if id in cart['items']:
+        cart['items'][id]['quantity'] = cart['items'][id]['quantity'] + 1
     else:
-        cart[id] = {
+        cart['items'][id] = {
             "id": id,
             "name": name,
             "price": price,
             "image": image,
             "count": count,
-            "quantity": 1
+            "quantity": 1,
+            "note": ""
         }
 
     session['cart'] = cart
@@ -223,11 +229,18 @@ def add_to_cart():
 @app.route('/api/carts/<product_id>', methods=['put'])
 def update_cart(product_id):
     cart = session.get('cart')
-    if cart and product_id in cart:
-        quantity = request.json.get('quantity')
-        cart[product_id]['quantity'] = int(quantity)
+    note = request.json.get('note')
+    quantity = request.json.get('quantity')
 
-        session['cart'] = cart
+    if note is not None:
+        if cart and product_id in cart['items']:
+            cart['items'][product_id]['note'] = note
+            session['cart'] = cart
+
+    if quantity is not None:
+        if cart and product_id in cart['items']:
+            cart['items'][product_id]['quantity'] = int(quantity)
+            session['cart'] = cart
 
     return jsonify(utils.stats_cart(cart))
 
@@ -235,15 +248,217 @@ def update_cart(product_id):
 @app.route('/api/carts/<product_id>', methods=['delete'])
 def delete_product_in_cart(product_id):
     cart = session.get('cart')
-    if cart and product_id in cart:
-        del cart[product_id]
+    if cart and product_id in cart['items']:
+        del cart['items'][product_id]
 
-        if cart:
+        if cart['items']:
             session['cart'] = cart
         else:
             session.pop('cart', None)
 
     return jsonify(utils.stats_cart(cart))
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0]
+    else:
+        ip = request.remote_addr
+    return ip
+
+
+@app.route("/payment", methods=["GET", "POST"])
+@login_required
+def payment():
+    if request.method == "GET":
+        context = common_response()
+        context['cart_stats'].update({
+            'total_amount': utils.stats_cart_amount(session.get('cart'))
+        })
+        return render_template("payment.html", **context, user=current_user)
+    else:
+        cart = session.get('cart')
+
+        items = list(cart['items'].values())
+        validation_errors = dao.validate_cart_items(items)
+        if validation_errors:
+            session.pop('cart', None)
+            return render_template("payment.html", title="Lỗi", result="Không thể xử lý đơn hàng",
+                                   errors=validation_errors)
+
+        receiver_name = request.form.get("person")
+        receiver_phone = request.form.get("phone")
+        receiver_address = request.form.get("address")
+
+        cart = {
+            **cart,
+            "receiver": {
+                "receiver_name": receiver_name,
+                "receiver_phone": receiver_phone,
+                "receiver_address": receiver_address
+            }
+        }
+        session['cart'] = cart
+
+        order_id = request.form.get("order_id")
+        amount = float(request.form.get("amount"))
+        order_type = request.form.get("order_type")
+        order_desc = request.form.get("order_desc")
+        bank_code = request.form.get("bank_code")
+        language = request.form.get("language")
+        ipaddr = get_client_ip(request)
+
+        if request.form.get("pay") == "vnpay":
+            vnp = vnpay()
+            vnp.requestData["vnp_Version"] = "2.1.0"
+            vnp.requestData["vnp_Command"] = "pay"
+            vnp.requestData["vnp_TmnCode"] = app.config["VNPAY_TMN_CODE"]
+            vnp.requestData["vnp_Amount"] = int(amount * 100)
+            vnp.requestData["vnp_CurrCode"] = "VND"
+            vnp.requestData["vnp_TxnRef"] = order_id
+            vnp.requestData["vnp_OrderInfo"] = order_desc
+            vnp.requestData["vnp_OrderType"] = order_type
+            if language and language != "":
+                vnp.requestData["vnp_Locale"] = language
+            else:
+                vnp.requestData["vnp_Locale"] = "vn"
+            if bank_code and bank_code != "":
+                vnp.requestData["vnp_BankCode"] = bank_code
+
+            vnp.requestData["vnp_CreateDate"] = datetime.now().strftime("%Y%m%d%H%M%S")
+            vnp.requestData["vnp_IpAddr"] = ipaddr
+            vnp.requestData["vnp_ReturnUrl"] = app.config["VNPAY_RETURN_URL"]
+            vnpay_payment_url = vnp.get_payment_url(
+                app.config["VNPAY_PAYMENT_URL"], app.config["VNPAY_HASH_SECRET_KEY"]
+            )
+            return redirect(vnpay_payment_url)
+        elif request.form.get("pay") == "momo":
+            return redirect(momo.get_payment_url(order_id, amount))
+
+    return redirect("/cart")
+
+
+@app.route("/vnpay_payment_return", methods=["GET"])
+def vnpay_payment_return():
+    inputData = request.args
+    if inputData:
+        vnp = vnpay()
+        vnp.responseData = dict(inputData)
+        order_id = inputData.get("vnp_TxnRef")
+        amount = int(inputData.get("vnp_Amount")) / 100
+        vnp_ResponseCode = inputData.get("vnp_ResponseCode")
+
+        if vnp.validate_response(app.config["VNPAY_HASH_SECRET_KEY"]):
+            if vnp_ResponseCode == "00":
+                cart = session.get('cart')
+
+                # ???????????
+                items = list(cart['items'].values())
+                receiver = cart['receiver']
+                cuisine = db.session.get(Cuisine, items[0]['id'])
+                restaurant_id = cuisine.cuisine_type.restaurant_id
+
+                order = dao.add_order(
+                    user_id=current_user.id,
+                    restaurant_id=restaurant_id,
+                    cart_items=items,
+                    receiver=receiver,
+                    payment_ref=order_id
+                )
+
+                session.pop('cart', None)
+
+                return render_template(
+                    "vnpay_payment_return.html",
+                    title="Thanh toán thành công",
+                    result="Success",
+                    order_id=order_id,
+                    amount=amount,
+                    vnp_ResponseCode=vnp_ResponseCode,
+                )
+
+            elif vnp_ResponseCode == "24":
+
+                return render_template(
+                    "vnpay_payment_return.html",
+                    title="Hủy thanh toán",
+                    result="Canceled",
+                    order_id=order_id,
+                    amount=amount,
+                    vnp_ResponseCode=vnp_ResponseCode,
+                )
+            else:
+                return render_template(
+                    "vnpay_payment_return.html",
+                    title="Lỗi thanh toán",
+                    result="Error",
+                    order_id=order_id,
+                    amount=amount,
+                    vnp_ResponseCode=vnp_ResponseCode,
+                )
+        else:
+            return render_template(
+                "vnpay_payment_return.html",
+                title="Payment result",
+                result="Error",
+                order_id=order_id,
+                amount=amount,
+                vnp_ResponseCode=vnp_ResponseCode,
+                msg="Invalid checksum",
+            )
+    return render_template(
+        "vnpay_payment_return.html", title="Kết quả thanh toán", result=""
+    )
+
+
+@app.route("/momo_payment_return", methods=["GET"])
+def momo_payment_return():
+    data = request.args.to_dict()
+    if data:
+        order_id = data.get("orderId")
+        amount = int(data.get("amount"))
+        result_code = data.get("resultCode")
+
+        if result_code == '0':
+            cart = session.get('cart')
+
+            # ???????????
+            items = list(cart['items'].values())
+            receiver = cart['receiver']
+            cuisine = db.session.get(Cuisine, items[0]['id'])
+            restaurant_id = cuisine.cuisine_type.restaurant_id
+
+            order = dao.add_order(
+                user_id=current_user.id,
+                restaurant_id=restaurant_id,
+                cart_items=items,
+                receiver=receiver,
+                payment_ref=order_id
+            )
+
+            session.pop('cart', None)
+
+            return render_template(
+                "momo_payment_return.html",
+                title="Thanh toán thành công",
+                result="Success",
+                order_id=order_id,
+                amount=amount,
+                result_code=result_code,
+            )
+        else:
+            return render_template(
+                "momo_payment_return.html",
+                title="Lỗi thanh toán",
+                result="Error",
+                order_id=order_id,
+                amount=amount,
+                result_code=result_code,
+            )
+    return render_template(
+        "momo_payment_return.html", title="Kết quả thanh toán", result=""
+    )
 
 
 @app.route("/manager/view/order")
@@ -327,4 +542,4 @@ def reputation_statistics():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(host="localhost", port=8000, debug=True)

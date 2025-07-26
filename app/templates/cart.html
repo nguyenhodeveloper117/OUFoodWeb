@@ -18,7 +18,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for c in session['cart'].values() %}
+            {% for c in session['cart']['items'].values() %}
             <tr id="cart{{ c.id }}">
                 <td class="d-none">
                     <span class="cuisine-count">{{c.count}}</span>
@@ -71,7 +71,8 @@
 
                 </th>
                 <th colspan="5">
-                    <textarea class="form-control" placeholder="..."></textarea>
+                    <textarea class="form-control note" data-id="{{ c.id }}"
+                              onblur="handleUpdateNote({{ c.id }}, this)" placeholder="...">{{ c.note }}</textarea>
                 </th>
             </tr>
             {%endfor%}
@@ -96,9 +97,10 @@
                     </p>
                 </div>
                 {% if current_user.is_authenticated %}
-                <button class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4"
-                        type="button">Đặt hàng
-                </button>
+                <a href="/payment"
+                   class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4">
+                    Đặt hàng
+                </a>
                 {% else %}
                 <div class="p-3 text-center">
                     <p>Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán </p>

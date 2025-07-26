@@ -1,0 +1,19 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div style="margin-top: 13%;" class="min-vh-100">
+    {% if result_code == '0' %}
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">&#9989; {{title}}</h2>
+            <div class="alert alert-success mb-3 text-center" role="alert">
+                Cảm ơn bạn vì đã đặt hàng.
+            </div>
+            <a href="/" class="col-12 btn border-secondary px-4 py-2 text-primary">Trang chủ</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

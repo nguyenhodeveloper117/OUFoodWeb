@@ -1,10 +1,12 @@
 import hashlib
 import cloudinary.uploader
+from sqlalchemy.exc import SQLAlchemyError
+
 from app import app, db
 
-from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType, Review
-from sqlalchemy.orm import aliased
-from sqlalchemy import  func
+from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType, Review, \
+    PaymentStatus
+from sqlalchemy import func
 
 
 def auth_user(username, password, role=None):
@@ -58,7 +60,8 @@ def get_order():
     ).join(
         Payment, Payment.order_id == Order.id
     )
-    .order_by(Order.id))
+            .order_by(Order.id))
+
 
 def get_order_detail(order_id):
     return (
@@ -83,6 +86,7 @@ def get_order_detail(order_id):
         .order_by(OrderDetail.id).all()
     )
 
+
 def update_order(order_id, status):
     order = Order.query.filter(order_id == Order.id).first()
     if order:
@@ -93,6 +97,7 @@ def update_order(order_id, status):
         db.session.commit()
         return True
     return False
+
 
 def get_cuisine(user_id):
     return (
@@ -116,6 +121,7 @@ def get_cuisine(user_id):
         .all()
     )
 
+
 def delete_cuisine(cuisine_id):
     cuisine = Cuisine.query.filter(Cuisine.id == cuisine_id).first()
     if cuisine:
@@ -123,6 +129,7 @@ def delete_cuisine(cuisine_id):
         db.session.commit()
         return True
     return False
+
 
 def get_cuisine_type(restaurant_id):
     return (
@@ -136,12 +143,13 @@ def get_cuisine_type(restaurant_id):
         .all()
     )
 
+
 def cuisine_add(name, price, image, description, cuisine_type):
     cuisine = Cuisine(
-        name = name,
-        price = price,
-        description = description,
-        cuisine_type_id = cuisine_type
+        name=name,
+        price=price,
+        description=description,
+        cuisine_type_id=cuisine_type
     )
     if image:
         res = cloudinary.uploader.upload(image)
@@ -149,6 +157,7 @@ def cuisine_add(name, price, image, description, cuisine_type):
 
     db.session.add(cuisine)
     db.session.commit()
+
 
 def update_quantity(cuisine_id, quantity):
     cuisine = Cuisine.query.filter(Cuisine.id == cuisine_id).first()
@@ -158,8 +167,9 @@ def update_quantity(cuisine_id, quantity):
         return True
     return False
 
+
 def get_review(user_id):
-    return  (
+    return (
         db.session.query(
             func.date_format(Review.created_date, "%Y-%m").label('month'),
             func.avg(Review.rate).label('avg_rate')
@@ -170,4 +180,64 @@ def get_review(user_id):
         .group_by(func.date_format(Review.created_date, "%Y-%m"))
         .order_by(func.date_format(Review.created_date, "%Y-%m"))
         .all()
-)
+    )
+
+
+def add_order(user_id, restaurant_id, cart_items, receiver, payment_ref):
+    try:
+        new_order = Order(
+            user_id=user_id,
+            restaurant_id=restaurant_id,
+            status=OrderStatus.NEWORDER,
+            receiver_name=receiver['receiver_name'],
+            receiver_phone=receiver['receiver_phone'],
+            receiver_address=receiver['receiver_address']
+        )
+        db.session.add(new_order)
+        db.session.flush()
+
+        total = 0
+
+        for item in cart_items:
+            cuisine = db.session.get(Cuisine, item['id'])
+            quantity = item.get('quantity')
+            note = item.get('note', '')
+
+            detail = OrderDetail(
+                order_id=new_order.id,
+                cuisine_id=cuisine.id,
+                quantity=quantity,
+                note=note
+            )
+            db.session.add(detail)
+
+            cuisine.count -= quantity
+            total += cuisine.price * quantity
+
+        payment = Payment(
+            order_id=new_order.id,
+            total=total,
+            status=PaymentStatus.PAID,
+            payment_ref=payment_ref
+        )
+        db.session.add(payment)
+        db.session.commit()
+
+        return new_order
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        raise e
+
+
+def validate_cart_items(cart_items):
+    errors = []
+    for item in cart_items:
+        cuisine = db.session.get(Cuisine, item['id'])
+        if not cuisine:
+            errors.append(f"Món ăn ID {item['id']} không tồn tại.")
+            continue
+        quantity = item.get('quantity')
+        if quantity > cuisine.count:
+            errors.append(f"Số lượng '{cuisine.name}' vượt quá tồn kho ({cuisine.count}).")
+    return errors

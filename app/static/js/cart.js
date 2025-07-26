@@ -100,6 +100,20 @@ function updateCart(productId, obj) {
     })
 }
 
+function handleUpdateNote(productId, obj) {
+    const note = obj.value;
+
+    fetch(`/api/carts/${productId}`, {
+        method: "put",
+        body: JSON.stringify({
+            'note': note
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+}
+
 function deleteProductInCart(productId) {
     if (confirm("Bạn có chắc chắc xóa không?") === true) {
         fetch(`/api/carts/${productId}`, {
