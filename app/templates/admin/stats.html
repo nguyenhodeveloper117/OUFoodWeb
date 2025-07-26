@@ -1,96 +1,91 @@
 {% extends 'admin/master.html' %}
 
 {% block body %}
-<h1 class="text-center text-danger mt-1">THỐNG KÊ - BÁO CÁO</h1>
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary text-center">Thống kê doanh thu</h2>
 
-<div class="row">
-    <div class="col-md-7 col-12">
-        <table class="table">
-            <tr>
-                <th>Id</th>
-                <th>Ten san pham</th>
-                <th>Doanh thu</th>
-            </tr>
-            {% for s in stats %}
-            <tr>
-                <td>{{ s[0] }}</td>
-                <td>{{ s[1] }}</td>
-                <td>{{ s[2] }} VND</td>
-            </tr>
-            {% endfor %}
-        </table>
+    <!-- FORM LỌC -->
+    <form method="get" class="row g-3 align-items-end justify-content-center mb-4">
+        <div class="col-md-3">
+            <label for="restaurant" class="form-label fw-bold">Nhà hàng</label>
+            <select name="restaurant_id" class="form-select">
+                {% for r in restaurants %}
+                    <option value="{{ r.id }}" {% if r.id == selected_restaurant %}selected{% endif %}>{{ r.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Từ ngày</label>
+            <input type="date" name="from_date" value="{{ from_date }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Đến ngày</label>
+            <input type="date" name="to_date" value="{{ to_date }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        </div>
+    </form>
+
+    <div class="mb-4">
+        <p><strong>Tổng doanh thu:</strong> {{ values | sum }} đ</p>
+        <p><strong>Tổng số đơn hàng:</strong> {{ values | length }}</p>
     </div>
-    <div class="col-md-5 col-12">
-        <canvas id="myChart"></canvas>
+
+    <!-- BIỂU ĐỒ -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <canvas id="revenueChart" height="120"></canvas>
+        </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-7 col-12">
-        <table class="table">
-            <tr>
-                <th>Thoi gian</th>
-                <th>Doanh thu</th>
-            </tr>
-            {% for s in stats2 %}
-            <tr>
-                <td>{{ s[0] }}</td>
-                <td>{{ s[1] }} VND</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-    <div class="col-md-5 col-12">
-        <canvas id="myChart2"></canvas>
-    </div>
-</div>
-
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    function draw(ctx, data, labels) {
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: '# Doanh thu',
-                data: data,
-                borderWidth: 1,
-                backgroundColor: ['red', 'green', 'blue', 'gold', 'brown']
-              }]
-            },
-            options: {
-              scales: {
-                y: {
-                  beginAtZero: true
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels | tojson }},
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: {{ values | tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                barThickness: 30,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.raw || 0;
+                            return new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND'
+                            }).format(value);
+                        }
+                    }
                 }
-              }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('vi-VN') + ' đ';
+                        }
+                    }
+                }
             }
-          });
-    }
-
-    let data = [];
-    let labels = [];
-
-    let data2 = [];
-    let labels2 = [];
-
-    {% for s in stats %}
-    data.push({{ s[2] }})
-    labels.push('{{ s[1] }}')
-    {% endfor %}
-
-    {% for s in stats2 %}
-    data2.push({{ s[1] }})
-    labels2.push({{ s[0] }})
-    {% endfor %}
-
-    window.onload = function() {
-        const ctx = document.getElementById('myChart');
-        draw(ctx, data, labels);
-
-        const ctx2 = document.getElementById('myChart2');
-        draw(ctx2, data2, labels2);
-    }
+        }
+    });
 </script>
 {% endblock %}

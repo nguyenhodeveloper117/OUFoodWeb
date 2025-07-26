@@ -64,6 +64,7 @@ class User(BaseModel, UserMixin):
     def __str__(self):
         return f"{self.id} - {self.name}"
 
+
 class Review(BaseModel):
     __tablename__ = 'review'
     __table_args__ = {'extend_existing': True}
@@ -89,8 +90,14 @@ class Order(BaseModel):
 
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.Enum(OrderStatus), default=OrderStatus.NEWORDER)
+    receiver_name = db.Column(db.String(100), nullable=False)
+    receiver_phone = db.Column(db.String(10), nullable=False)
+    receiver_address = db.Column(db.String(255), nullable=False)
+
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref='orders')
+    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"))
+    restaurant = db.relationship("Restaurant", backref="orders")
 
     def __str__(self):
         return f"Order {self.id} - User {self.user.name}"
@@ -121,6 +128,7 @@ class Payment(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     total = db.Column(db.Float, default=0)
     status = db.Column(db.Enum(PaymentStatus), default=PaymentStatus.UNPAID)
+    payment_ref = db.Column(db.String(255), nullable=False, unique=True)
 
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     order = db.relationship('Order', backref='payment')
@@ -180,6 +188,7 @@ class Restaurant(BaseModel):
 
     def __str__(self):
         return f"{self.id} - {self.name}"
+
 
 if __name__ == '__main__':
     with app.app_context():
@@ -263,19 +272,27 @@ if __name__ == '__main__':
         r2 = Review(content='Ổn, giá hợp lý', rate=4, user_id=admin.id, restaurant_id=res2.id)
         db.session.add_all([r1, r2])
 
-        # Tạo đơn hàng + chi tiết
-        order = Order(user_id=admin.id, created_date=datetime.now(), status=OrderStatus.PROCESSING)
+        # Tạo đơn hàng gắn với restaurant (quan trọng!)
+        order = Order(
+            user_id=admin.id,
+            restaurant_id=res1.id,  # Gắn đúng nhà hàng
+            created_date=datetime.now(),
+            status=OrderStatus.PROCESSING,
+            receiver_name="batman",
+            receiver_phone="0912345678",
+            receiver_address="HCM"
+        )
         db.session.add(order)
         db.session.flush()
 
+        # Chi tiết đơn hàng
         detail1 = OrderDetail(order_id=order.id, cuisine_id=c1.id, quantity=2, note='Ít cay')
         detail2 = OrderDetail(order_id=order.id, cuisine_id=c2.id, quantity=1, note='Ít đá')
         db.session.add_all([detail1, detail2])
 
         # Tạo thanh toán
-        payment = Payment(order_id=order.id, total=105000, status=PaymentStatus.PAID)
+        payment = Payment(order_id=order.id, total=105000, status=PaymentStatus.PAID, payment_ref="abc")
         db.session.add(payment)
 
         db.session.commit()
         print("Đã tạo dữ liệu mẫu thành công!")
-
