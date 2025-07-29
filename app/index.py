@@ -356,12 +356,9 @@ def vnpay_payment_return():
                 # ???????????
                 items = list(cart['items'].values())
                 receiver = cart['receiver']
-                cuisine = db.session.get(Cuisine, items[0]['id'])
-                restaurant_id = cuisine.cuisine_type.restaurant_id
 
                 order = dao.add_order(
                     user_id=current_user.id,
-                    restaurant_id=restaurant_id,
                     cart_items=items,
                     receiver=receiver,
                     payment_ref=order_id
@@ -426,12 +423,9 @@ def momo_payment_return():
             # ???????????
             items = list(cart['items'].values())
             receiver = cart['receiver']
-            cuisine = db.session.get(Cuisine, items[0]['id'])
-            restaurant_id = cuisine.cuisine_type.restaurant_id
 
             order = dao.add_order(
                 user_id=current_user.id,
-                restaurant_id=restaurant_id,
                 cart_items=items,
                 receiver=receiver,
                 payment_ref=order_id

@@ -183,11 +183,10 @@ def get_review(user_id):
     )
 
 
-def add_order(user_id, restaurant_id, cart_items, receiver, payment_ref):
+def add_order(user_id, cart_items, receiver, payment_ref):
     try:
         new_order = Order(
             user_id=user_id,
-            restaurant_id=restaurant_id,
             status=OrderStatus.NEWORDER,
             receiver_name=receiver['receiver_name'],
             receiver_phone=receiver['receiver_phone'],

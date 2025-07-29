@@ -129,8 +129,8 @@ class ReviewAdminView(AuthenticatedAdminView):
     column_sortable_list = ['id', 'rate', 'date', 'created_date', 'updated_date']
 
 class OrderAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'status', 'user', 'restaurant', 'created_date', 'updated_date']
-    form_columns = ['status', 'user', 'restaurant', 'created_date', 'updated_date']
+    column_list = ['id', 'status', 'user', 'created_date', 'updated_date']
+    form_columns = ['status', 'user', 'created_date', 'updated_date']
     column_searchable_list = ['id', 'user_id']
     column_filters = ['status', 'user_id']
     column_sortable_list = ['id', 'status', 'user_id', 'created_date', 'updated_date']

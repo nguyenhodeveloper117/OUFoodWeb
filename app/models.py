@@ -96,8 +96,7 @@ class Order(BaseModel):
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref='orders')
-    restaurant_id = db.Column(db.Integer, db.ForeignKey("restaurant.id"))
-    restaurant = db.relationship("Restaurant", backref="orders")
+
 
     def __str__(self):
         return f"Order {self.id} - User {self.user.name}"
@@ -275,7 +274,6 @@ if __name__ == '__main__':
         # Tạo đơn hàng gắn với restaurant (quan trọng!)
         order = Order(
             user_id=admin.id,
-            restaurant_id=res1.id,  # Gắn đúng nhà hàng
             created_date=datetime.now(),
             status=OrderStatus.PROCESSING,
             receiver_name="batman",
