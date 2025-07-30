@@ -44,6 +44,7 @@ class LogoutView(AuthenticatedView):
 class StatsView(AuthenticatedView):
     @expose('/')
     def index(self):
+        # --- Lấy tham số từ URL ---
         restaurant_id = request.args.get('restaurant_id', type=int)
         from_date_str = request.args.get('from_date')
         to_date_str = request.args.get('to_date')
@@ -54,36 +55,40 @@ class StatsView(AuthenticatedView):
         from_date = datetime.strptime(from_date_str, '%Y-%m-%d') if from_date_str else default_from_date
         to_date = datetime.strptime(to_date_str, '%Y-%m-%d') if to_date_str else today
 
-        # Lấy danh sách nhà hàng
+        # --- Lấy danh sách nhà hàng ---
         restaurants = Restaurant.query.all()
-        if restaurant_id is None and restaurants:
+        if not restaurant_id and restaurants:
             restaurant_id = restaurants[0].id
 
-        # Truy vấn doanh thu theo ngày
-        revenue_stats = db.session.query(
-            func.date(Payment.created_date).label('date'),
-            func.sum(Payment.total).label('total_revenue')
-        ).join(Order).join(Restaurant) \
-         .filter(
-            Payment.status == PaymentStatus.PAID,
-            Restaurant.id == restaurant_id,
-            Payment.created_date >= from_date,
-            Payment.created_date <= to_date
-         ).group_by(func.date(Payment.created_date)) \
-         .order_by(func.date(Payment.created_date)) \
-         .all()
+        # --- Lấy danh sách order_id của nhà hàng được chọn ---
+        order_ids_query = db.session.query(Order.id).join(Order.order_details) \
+            .join(OrderDetail.cuisine) \
+            .join(Cuisine.cuisine_type) \
+            .filter(CuisineType.restaurant_id == restaurant_id) \
+            .distinct()
+
+        order_ids = [oid[0] for oid in order_ids_query.all()]  # chuyển thành list[int]
+
+        # --- Truy vấn thống kê doanh thu theo ngày từ các Payment của các order trên ---
+        revenue_stats = []
+        if order_ids:
+            revenue_stats = db.session.query(
+                func.date(Payment.created_date).label('date'),
+                func.sum(Payment.total).label('total_revenue')
+            ).filter(
+                Payment.status == PaymentStatus.PAID,
+                Payment.order_id.in_(order_ids),
+                Payment.created_date >= from_date,
+                Payment.created_date <= to_date
+            ).group_by(func.date(Payment.created_date)) \
+            .order_by(func.date(Payment.created_date)) \
+            .all()
 
         labels = [r.date.strftime('%Y-%m-%d') for r in revenue_stats]
         values = [float(r.total_revenue) for r in revenue_stats]
 
-        # Truy vấn số lượng đơn hàng
-        order_count = db.session.query(func.count(Order.id)) \
-            .join(Restaurant) \
-            .filter(
-                Order.restaurant_id == restaurant_id,
-                Order.created_date >= from_date,
-                Order.created_date <= to_date
-            ).scalar()
+        # --- Đếm tổng số đơn hàng duy nhất ---
+        order_count = len(order_ids)
 
         return self.render('admin/stats.html',
                            labels=labels,
@@ -129,8 +134,8 @@ class ReviewAdminView(AuthenticatedAdminView):
     column_sortable_list = ['id', 'rate', 'date', 'created_date', 'updated_date']
 
 class OrderAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'status', 'user', 'created_date', 'updated_date']
-    form_columns = ['status', 'user', 'created_date', 'updated_date']
+    column_list = ['id', 'status', 'user', 'receiver_name', 'receiver_phone', 'receiver_address', 'created_date', 'updated_date']
+    form_columns = ['status', 'user', 'receiver_name', 'receiver_phone', 'receiver_address', 'created_date', 'updated_date']
     column_searchable_list = ['id', 'user_id']
     column_filters = ['status', 'user_id']
     column_sortable_list = ['id', 'status', 'user_id', 'created_date', 'updated_date']
@@ -143,8 +148,8 @@ class OrderDetailAdminView(AuthenticatedAdminView):
     column_sortable_list = ['id', 'quantity', 'cuisine_id', 'order_id', 'created_date', 'updated_date']
 
 class PaymentAdminView(AuthenticatedAdminView):
-    column_list = ['id', 'total', 'status', 'order', 'created_date', 'updated_date']
-    form_columns = ['total', 'status', 'order', 'created_date', 'updated_date']
+    column_list = ['id', 'total', 'status', 'order', 'payment_ref', 'created_date', 'updated_date']
+    form_columns = ['total', 'status', 'order', 'payment_ref', 'created_date', 'updated_date']
     column_searchable_list = ['id', 'order_id']
     column_filters = ['status']
     column_sortable_list = ['id', 'total', 'order_id', 'created_date', 'updated_date']
