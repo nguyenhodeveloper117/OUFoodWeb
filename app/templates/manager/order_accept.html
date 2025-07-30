@@ -10,6 +10,7 @@
             <th>STT</th>
             <th>Người đặt</th>
             <th>Thời gian đặt hàng</th>
+            <th>Số món ăn</th>
             <th>Số tiền thanh toán</th>
             <th>Phương thức thanh toán</th>
             <th>Trạng thái đơn hàng</th>
@@ -17,27 +18,30 @@
         </tr>
         </thead>
         <tbody>
-            {% for order in orders %}
-                <tr>
-                    <td>{{order.id}}</td>
-                    <td>{{order.name}}</td>
-                    <td>{{order.created_date}}</td>
-                    <td>{{ "{:,.0f}".format(order.total) }} VND</td>
-                    <td>Thanh toán online</td>
-                    {% if order.status.name == "PROCESSING" %}
-                        <td>Đang xử lý</td>
-                    {%elif order.status.name == "NEWORDER" %}
-                        <td>Đơn hàng mới</td>
-                    {%else%}
-                        <td>Đã xử lý</td>
-                    {%endif%}
-                    <td>
-                        <div>
-                            <a href="/manager/view/oder_detail/{{order.id}}">Xem</a>
-                        </div>
-                    </td>
-                </tr>
-            {%endfor%}
+            {%if orders%}
+                {% for order in orders %}
+                    <tr>
+                        <td>{{order.id}}</td>
+                        <td>{{order.name}}</td>
+                        <td>{{order.created_date}}</td>
+                        <td>{{order.count}}</td>
+                        <td>{{ "{:,.0f}".format(order.total) }} VND</td>
+                        <td>Thanh toán online</td>
+                        {% if order.status.name == "PROCESSING" %}
+                            <td>Đang xử lý</td>
+                        {%elif order.status.name == "NEWORDER" %}
+                            <td>Đơn hàng mới</td>
+                        {%else%}
+                            <td>Đã xử lý</td>
+                        {%endif%}
+                        <td>
+                            <div>
+                                <a href="/manager/view/oder_detail/{{order.id}}">Xem</a>
+                            </div>
+                        </td>
+                    </tr>
+                {%endfor%}
+            {%endif%}
         </tbody>
     </table>
 </div>

@@ -458,7 +458,8 @@ def momo_payment_return():
 @app.route("/manager/view/order")
 @decorators.manager_required
 def view_order():
-    orders = dao.get_order()
+    current_user_id = current_user.id
+    orders = dao.get_order(current_user_id)
     return render_template("manager/order_accept.html", orders=orders)
 
 
@@ -475,7 +476,6 @@ def update_status_order_approve():
     order_id = request.json.get('order_id')
     status = request.json.get('status')
     result = dao.update_order(order_id, status)
-    print(result)
     return jsonify({'result': result})
 
 
@@ -483,7 +483,6 @@ def update_status_order_approve():
 @decorators.manager_required
 def view_cuisine_manager():
     cuisines = dao.get_cuisine(current_user.id)
-    print(cuisines)
     return render_template("manager/cuisine_manager.html", cuisines=cuisines)
 
 
@@ -534,6 +533,22 @@ def reputation_statistics():
         print(reviews)
     return render_template("manager/reputation_statistics.html", reviews=reviews)
 
+
+@app.route("/history")
+@login_required
+def history_order():
+    orders = dao.get_order_history(current_user.id)
+    print(orders)
+    return render_template("history.html", orders=orders)
+
+@app.route("/api/rate/restaurant", methods=["POST"])
+def rate_restaurant():
+    order_detail_id = request.json.get("order_detail_id")
+    star = request.json.get("star")
+    content = request.json.get("content")
+    restaurant_id = dao.get_restaurant(order_detail_id)
+    dao.add_review(restaurant_id[0], star, content, current_user.id)
+    return jsonify({'result':"true"})
 
 if __name__ == "__main__":
     app.run(host="localhost", port=8000, debug=True)
