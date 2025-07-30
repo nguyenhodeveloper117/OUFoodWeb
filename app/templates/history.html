@@ -1,0 +1,92 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+
+<style>
+.star-rating .star {
+  font-size: 2rem;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.star-rating .star.hover,
+.star-rating .star.selected {
+  color: gold;
+}
+</style>
+
+<div class="container pt-5" style="margin-top: 200px">
+    <table class="table table-bordered order-table text-center align-middle">
+        <thead>
+        <tr>
+            <th>STT</th>
+            <th>Thời gian đặt hàng</th>
+            <th>Tên món ăn</th>
+            <th>Giá</th>
+            <th>Số lượng</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+        </tr>
+        </thead>
+        <tbody>
+        {%if orders%}
+        {% for order in orders %}
+        <tr>
+            <td>{{order.id}}</td>
+            <td>{{order.created_date}}</td>
+            <td>{{order.name}}</td>
+            <td>{{ "{:,.0f}".format(order.price) }} VND</td>
+            <td>{{order.quantity}}</td>
+            <td>{{ "{:,.0f}".format(order.price*order.quantity) }} VND</td>
+            {% if order.status.name == "PROCESSING" %}
+            <td>Đang xử lý</td>
+            {%elif order.status.name == "NEWORDER" %}
+            <td>Đơn hàng mới</td>
+            {%else%}
+            <td>Đã xử lý</td>
+            {%endif%}
+            {%if order.status.name == "COMPLETE" %}
+                <td>
+                    <button type="button" class="btn btn-primary" id="button_rate_{{order.id}}" onclick="getOrderId({{order.id}})" data-bs-toggle="modal" data-bs-target="#ratingModal">
+                        Đánh giá
+                    </button>
+                </td>
+            {%endif%}
+        </tr>
+        {%endfor%}
+        {%endif%}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" id="ratingForm">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ratingModalLabel">Đánh giá nhà hàng</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="star-rating">
+          <!-- Các ngôi sao -->
+          <span class="star" data-value="1">&#9733;</span>
+          <span class="star" data-value="2">&#9733;</span>
+          <span class="star" data-value="3">&#9733;</span>
+          <span class="star" data-value="4">&#9733;</span>
+          <span class="star" data-value="5">&#9733;</span>
+        </div>
+        <div style="padding-top: 5px">
+            <p>Viết đánh giá</p>
+            <input name="review" id="content" >
+        </div>
+        <input type="hidden" name="rating" id="ratingValue" value="0">
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="confirm_rate()" class="btn btn-success">Gửi đánh giá</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

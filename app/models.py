@@ -215,7 +215,18 @@ if __name__ == '__main__':
             avatar='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg',
             role=Role.MANAGER
         )
-        db.session.add_all([admin, manager])
+
+        manager2 = User(
+            name='manager2',
+            username='ThanhDan2',
+            password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
+            email='ThanhDan2@example.com',
+            phone='0909000002',
+            address='123 Admin Stree',
+            avatar='https://res.cloudinary.com/dnwyvuqej/image/upload/v1733499646/default_avatar_uv0h7z.jpg',
+            role=Role.MANAGER
+        )
+        db.session.add_all([admin, manager, manager2])
         db.session.flush()  # để lấy admin.id
 
         # Tạo restaurant gắn với admin (user_id)
@@ -233,7 +244,7 @@ if __name__ == '__main__':
             location='Quận 3',
             introduce='Cơm tấm nổi tiếng',
             image='https://res.cloudinary.com/dnwyvuqej/image/upload/v1752339222/download_1_haf8dl.jpg',
-            user_id=manager.id
+            user_id=manager2.id
         )
         db.session.add_all([res1, res2])
         db.session.flush()  # lấy res1.id và res2.id
@@ -241,7 +252,9 @@ if __name__ == '__main__':
         # Tạo cuisine type gắn với restaurant (res1)
         ct1 = CuisineType(name='Món chính', restaurant_id=res1.id)
         ct2 = CuisineType(name='Đồ uống', restaurant_id=res1.id)
-        db.session.add_all([ct1, ct2])
+        ct3 = CuisineType(name='Món chính', restaurant_id=res2.id)
+        ct4 = CuisineType(name='Đồ uống', restaurant_id=res2.id)
+        db.session.add_all([ct1, ct2, ct3, ct4])
         db.session.flush()
 
         # Tạo cuisine gắn với cuisine type
@@ -263,7 +276,26 @@ if __name__ == '__main__':
             cuisine_type_id=ct2.id,
             beverage_type=BeverageType.JUICE
         )
-        db.session.add_all([c1, c2])
+
+        c3 = Cuisine(
+            name='Bún Gà',
+            price=45000,
+            image='https://hellodanang.vn/wp-content/uploads/2024/10/top-10-quan-bun-bo-hue-ngon-o-da-nang-ngon-chat-luong-1729312176.jpg',
+            description='Đậm vị Huế',
+            count=10,
+            cuisine_type_id=ct3.id,
+            food_type=FoodType.MAIN
+        )
+        c4 = Cuisine(
+            name='Trà Sữa',
+            price=15000,
+            image='https://cf.shopee.vn/file/8ead015bf67f00cc507c9eb2f9d274f6',
+            description='Mát lạnh',
+            count=20,
+            cuisine_type_id=ct4.id,
+            beverage_type=BeverageType.JUICE
+        )
+        db.session.add_all([c1, c2, c3, c4])
         db.session.flush()
 
         # Tạo review
@@ -280,17 +312,29 @@ if __name__ == '__main__':
             receiver_phone="0912345678",
             receiver_address="HCM"
         )
-        db.session.add(order)
+        order2 = Order(
+            user_id=admin.id,
+            created_date=datetime.now(),
+            status=OrderStatus.PROCESSING,
+            receiver_name="batman",
+            receiver_phone="0912345678",
+            receiver_address="HCM"
+        )
+        db.session.add_all([order, order2])
         db.session.flush()
 
         # Chi tiết đơn hàng
         detail1 = OrderDetail(order_id=order.id, cuisine_id=c1.id, quantity=2, note='Ít cay')
         detail2 = OrderDetail(order_id=order.id, cuisine_id=c2.id, quantity=1, note='Ít đá')
-        db.session.add_all([detail1, detail2])
+        detail3 = OrderDetail(order_id=order2.id, cuisine_id=c3.id, quantity=2, note='Ít cay')
+        detail4 = OrderDetail(order_id=order2.id, cuisine_id=c4.id, quantity=1, note='Ít đá')
+        db.session.add_all([detail1, detail2, detail3, detail4])
 
         # Tạo thanh toán
         payment = Payment(order_id=order.id, total=105000, status=PaymentStatus.PAID, payment_ref="abc")
-        db.session.add(payment)
+        payment2 = Payment(order_id=order2.id, total=100000, status=PaymentStatus.PAID, payment_ref="abcd")
+
+        db.session.add_all([payment, payment2])
 
         db.session.commit()
         print("Đã tạo dữ liệu mẫu thành công!")

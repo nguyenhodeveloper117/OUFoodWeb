@@ -1,12 +1,12 @@
 import hashlib
 import cloudinary.uploader
 from sqlalchemy.exc import SQLAlchemyError
-
+from datetime import  datetime
 from app import app, db
 
 from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType, Review, \
     PaymentStatus
-from sqlalchemy import func
+from sqlalchemy import func, DateTime
 
 
 def auth_user(username, password, role=None):
@@ -48,19 +48,32 @@ def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
 
 
-def get_order():
+def get_order(user_id):
     return (db.session.query(
         Order.id,
         User.name,
         Order.created_date,
         Payment.total,
-        Order.status
-    ).join(
-        User, Order.user_id == User.id
+        Order.status,
+        func.Count(OrderDetail.id).label("count")
     ).join(
         Payment, Payment.order_id == Order.id
-    )
-            .order_by(Order.id))
+    ).join(
+        User, User.id == Order.user_id
+    ).join(
+        OrderDetail, OrderDetail.order_id == Order.id
+    ).join(
+        Cuisine, Cuisine.id == OrderDetail.cuisine_id
+    ).join(
+            CuisineType, CuisineType.id == Cuisine.cuisine_type_id
+    ).join(
+            Restaurant, Restaurant.id == CuisineType.restaurant_id
+    ).filter(Restaurant.user_id == user_id)
+    .group_by(Order.id,
+              User.name,
+                Order.created_date,
+                Payment.total,
+                Order.status))
 
 
 def get_order_detail(order_id):
@@ -240,3 +253,44 @@ def validate_cart_items(cart_items):
         if quantity > cuisine.count:
             errors.append(f"Số lượng '{cuisine.name}' vượt quá tồn kho ({cuisine.count}).")
     return errors
+
+def get_order_history(user_id):
+    return (db.session.query(
+        Order.created_date,
+        Order.status,
+        OrderDetail.id,
+        OrderDetail.quantity,
+        Cuisine.name,
+        Cuisine.price
+    ).join(
+        User, User.id == Order.user_id
+    ).join(
+        OrderDetail, OrderDetail.order_id == Order.id
+    ).join(
+        Cuisine, Cuisine.id == OrderDetail.cuisine_id
+    )
+    .filter(User.id == user_id).all())
+
+def get_restaurant(order_detail_id):
+    return db.session.query(
+        Restaurant.id
+    ).join(
+        CuisineType, CuisineType.restaurant_id == Restaurant.id
+    ).join(
+        Cuisine, Cuisine.cuisine_type_id == CuisineType.id
+    ).join(
+        OrderDetail, OrderDetail.cuisine_id == Cuisine.id
+    ).filter(order_detail_id == OrderDetail.id).first()
+
+def add_review(restaurant_id, star, content, user_id):
+    review = Review(
+        content = content,
+        rate = star,
+        date = datetime.now(),
+        user_id = user_id,
+        restaurant_id = restaurant_id,
+        created_date=datetime.now(),
+        updated_date = datetime.now()
+    )
+    db.session.add(review)
+    db.session.commit()

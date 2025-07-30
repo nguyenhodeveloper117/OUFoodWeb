@@ -87,7 +87,7 @@ function openQuantityModal(itemId) {
     modal.show();
 }
 
-function confirm(){
+function confirm_update(){
     const quantity_input = document.getElementById('quantityInput').value
     fetch("/api/update/quantity", {
         method: "PUT",
