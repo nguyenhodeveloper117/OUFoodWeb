@@ -1,9 +1,10 @@
 from flask_login import logout_user, login_user, current_user, login_required
+from sqlalchemy import func
 from app import app, login, dao, google, admin, utils, decorators, db, momo
 from flask import render_template, redirect, flash, request, url_for, session, jsonify
 from datetime import datetime
 from app.vnpay import vnpay
-from models import Restaurant, CuisineType, Role, Cuisine
+from models import Restaurant, CuisineType, Role, Cuisine, Review
 from dao import add_user
 import uuid
 
@@ -38,6 +39,14 @@ def home():
 
     restaurants = query.all()
 
+    # Tính trung bình đánh giá cho từng nhà hàng
+    avg_ratings = db.session.query(
+        Review.restaurant_id,
+        func.avg(Review.rate).label('avg_rate')
+    ).group_by(Review.restaurant_id).all()
+
+    rating_map = {rid: round(avg, 1) for rid, avg in avg_ratings}  # Map restaurant_id -> avg_rate
+
     types = [r.type for r in Restaurant.query.with_entities(Restaurant.type).distinct()]
     locations = [r.location for r in Restaurant.query.with_entities(Restaurant.location).distinct()]
     cuisine_types = CuisineType.query.all()
@@ -46,7 +55,8 @@ def home():
                            restaurants=restaurants,
                            types=types,
                            locations=locations,
-                           cuisine_types=cuisine_types)
+                           cuisine_types=cuisine_types,
+                           rating_map=rating_map)
 
 
 @app.route('/restaurant/<int:restaurant_id>')
@@ -76,13 +86,17 @@ def restaurant_detail(restaurant_id):
            (not beverage_type or c.beverage_type.name == beverage_type)
     ]
 
+    # Lấy danh sách đánh giá
+    reviews = Review.query.filter_by(restaurant_id=r.id).order_by(Review.date.desc()).all()
+
     return render_template('restaurant_cuisine.html',
                            restaurant=r,
                            food_cuisines=food_cuisines,
                            beverage_cuisines=beverage_cuisines,
                            keyword=keyword,
                            food_type=food_type,
-                           beverage_type=beverage_type)
+                           beverage_type=beverage_type,
+                           reviews=reviews)
 
 
 @app.route("/login", methods=['get', 'post'])
@@ -541,6 +555,7 @@ def history_order():
     print(orders)
     return render_template("history.html", orders=orders)
 
+
 @app.route("/api/rate/restaurant", methods=["POST"])
 def rate_restaurant():
     order_detail_id = request.json.get("order_detail_id")
@@ -548,7 +563,8 @@ def rate_restaurant():
     content = request.json.get("content")
     restaurant_id = dao.get_restaurant(order_detail_id)
     dao.add_review(restaurant_id[0], star, content, current_user.id)
-    return jsonify({'result':"true"})
+    return jsonify({'result': "true"})
+
 
 if __name__ == "__main__":
     app.run(host="localhost", port=8000, debug=True)

@@ -107,6 +107,23 @@
                         <p><strong>Loại hình:</strong> {{ r.type }}</p>
                         <p><strong>Địa điểm:</strong> {{ r.location }}</p>
                         <p><strong>Giới thiệu:</strong> {{ r.introduce }}</p>
+                        {% set avg = rating_map.get(r.id) %}
+                        <p>
+                            {% if avg %}
+                                ⭐ {{ avg }}
+                                <span>
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= avg|round(0, 'floor') %}
+                                            <i class="fa fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="fa fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                {% else %}
+                                    Chưa có đánh giá
+                            {% endif %}
+                        </p>
                         <a href="/restaurant/{{ r.id }}" class="btn btn-outline-primary rounded-pill">Xem chi tiết</a>
                     </div>
                 </div>

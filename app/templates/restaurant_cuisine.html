@@ -110,6 +110,42 @@
             </div>
         </div>
     </div>
+
+    <!-- Đánh giá -->
+    <h3 class="mb-4 text-warning">⭐ Đánh giá của khách hàng</h3>
+
+    {% if reviews %}
+    <div id="review-list">
+        {% for review in reviews %}
+        <div class="card mb-3 review-item" style="display: {{ loop.index <= 3 and 'block' or 'none' }};">
+            <div class="card-body">
+                <h6 class="mb-1">
+                    <strong>{{ review.user.name }}</strong> – {{ review.date.strftime('%d/%m/%Y %H:%M') }}
+                </h6>
+                <p class="mb-2">{{ review.content }}</p>
+                <div>
+                    {% for i in range(1, 6) %}
+                    {% if i <= review.rate %}
+                    <i class="fa fa-star text-warning"></i>
+                    {% else %}
+                    <i class="fa fa-star" style="color: #ddd;"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if reviews|length > 3 %}
+    <div class="text-center mt-2">
+        <button class="btn btn-outline-primary btn-sm" id="load-more-btn">Xem thêm</button>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="text-muted">Nhà hàng chưa có đánh giá nào.</p>
+    {% endif %}
 </div>
 <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/review.js') }}"></script>
 {% endblock %}
