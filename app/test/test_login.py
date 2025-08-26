@@ -1,5 +1,5 @@
 import sys
-sys.path.append(r"C:\ProgramData\Jenkins\.jenkins\workspace\OUFood")
+sys.path.append(r"C:\ProgramData\Jenkins\.jenkins\workspace\OUFood\app")
 
 import unittest
 from app import dao, app
@@ -11,3 +11,4 @@ class TestLogin(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
