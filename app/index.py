@@ -1,3 +1,6 @@
+import sys
+sys.path.append(r"C:\ProgramData\Jenkins\.jenkins\workspace\OUFood\app")
+
 from flask_login import logout_user, login_user, current_user, login_required
 from sqlalchemy import func
 from app import app, login, dao, google, admin, utils, decorators, db, momo
