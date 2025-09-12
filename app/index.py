@@ -370,7 +370,6 @@ def vnpay_payment_return():
             if vnp_ResponseCode == "00":
                 cart = session.get('cart')
 
-                # ???????????
                 items = list(cart['items'].values())
                 receiver = cart['receiver']
 
@@ -437,7 +436,6 @@ def momo_payment_return():
         if result_code == '0':
             cart = session.get('cart')
 
-            # ???????????
             items = list(cart['items'].values())
             receiver = cart['receiver']
 
