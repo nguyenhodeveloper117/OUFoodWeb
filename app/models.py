@@ -1,8 +1,10 @@
 import hashlib
+from email.policy import default
+from pydoc import describe
 
 from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from enum import Enum as RoleEnum
 from datetime import datetime
 from app import db, app
@@ -189,6 +191,52 @@ class Restaurant(BaseModel):
         return f"{self.id} - {self.name}"
 
 
+class Tenant(BaseModel):
+    __tablename__ = "tenant"
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(db.Boolean, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref='Tenant')
+
+class Plan(BaseModel):
+    __tablename__ = "plan"
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(10000), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    max_food = db.Column(db.Integer, nullable=False)
+    time = db.Column(db.Integer, nullable=False, default=30)
+
+
+class Subscription(BaseModel):
+    __tablename__ = 'subscription'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    end_date = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default="active")
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey('plan.id'), nullable=False)
+
+    tenant = db.relationship('Tenant', backref='Subscription')
+    plan = db.relationship('Plan', backref='Subscription')
+
+class SaasPayment(BaseModel):
+    __tablename__ = 'SaasPayment'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer, primary_key=True)
+    payment_method = db.Column(db.String(20), default="bank")
+    payment_amount = db.Column(db.Float, nullable=False)
+    status = db.Column(db.Boolean, default=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey('subscription.id'), nullable=False)
+
+    subscription = db.relationship('Subscription', backref='SaasPayment')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
@@ -333,8 +381,15 @@ if __name__ == '__main__':
         # Tạo thanh toán
         payment = Payment(order_id=order.id, total=105000, status=PaymentStatus.PAID, payment_ref="abc")
         payment2 = Payment(order_id=order2.id, total=100000, status=PaymentStatus.PAID, payment_ref="abcd")
-
         db.session.add_all([payment, payment2])
+
+
+        #Tạo Plan
+        plan1 = Plan(name="Free", description="Gói free cho phép người dùng sử dụng thử trong vòng 30 ngày và cho được phép thêm tối đa 3 món ăn", price=0, max_food=3)
+        plan2 = Plan(name="Basic", description="Gói free cho phép người dùng sử dụng trong vòng 30 ngày và cho được phép thêm tối đa 5 món ăn", price=100000, max_food=5)
+        plan3 = Plan(name="Pro", description="Gói free cho phép người dùng sử dụng thử trong vòng 90 ngày và cho được phép thêm tối đa 10 món ăn", price=300000, max_food=10)
+        plan4 = Plan(name="Vip", description="Gói free cho phép người dùng sử dụng thử trong vòng 180 ngày và cho được phép thêm tối đa 50 món ăn", price=500000, max_food=50)
+        db.session.add_all([plan1, plan2, plan3, plan4])
 
         db.session.commit()
         print("Đã tạo dữ liệu mẫu thành công!")
