@@ -9,12 +9,12 @@
 
     <form method="post" action="/register" enctype="multipart/form-data">
         <div class="form-floating mb-3 mt-3">
-            <input required type="text" class="form-control" id="name" placeholder="Họ tên" name="name" />
+            <input required type="text" class="form-control" id="name" placeholder="Họ tên" name="name"/>
             <label for="name">Họ tên</label>
         </div>
 
         <div class="form-floating mb-3 mt-3">
-            <input required type="text" class="form-control" id="username" placeholder="Tên đăng nhập" name="username" />
+            <input required type="text" class="form-control" id="username" placeholder="Tên đăng nhập" name="username"/>
             <label for="username">Tên đăng nhập</label>
         </div>
 
@@ -24,7 +24,8 @@
         </div>
 
         <div class="form-floating mt-3 mb-3">
-            <input required type="password" class="form-control" id="confirm" placeholder="Xác nhận mật khẩu" name="confirm">
+            <input required type="password" class="form-control" id="confirm" placeholder="Xác nhận mật khẩu"
+                   name="confirm">
             <label for="confirm">Xác nhận Mật khẩu</label>
         </div>
 
@@ -41,6 +42,13 @@
         <div class="form-floating mt-3 mb-3">
             <input type="text" class="form-control" id="address" placeholder="Địa chỉ" name="address">
             <label for="address">Địa chỉ</label>
+        </div>
+
+        <div class="form-floating mt-3 mb-3">
+            <select name="role" class="form-select form-select-sm" aria-label=".form-select-sm example">
+                <option value="CUSTOMER" selected>Người dùng</option>
+                <option value="MANAGER">Người bán</option>
+            </select>
         </div>
 
         <div class="form-floating mt-3 mb-3">

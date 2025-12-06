@@ -1,0 +1,82 @@
+{% extends 'manager/layout/base.html' %}
+
+{% block content %}
+<div style="margin-top: 13%;">
+    <h1 class="text-center text-danger mt-1">Thêm thông tin</h1>
+
+    {% if err_msg %}
+    <div class="alert alert-danger">{{ err_msg }}</div>
+    {% endif %}
+
+    <form method="post" action="/infor/restaurant" enctype="multipart/form-data">
+        <div class="form-floating mb-3 mt-3">
+            <input required type="text" class="form-control" id="name" placeholder="Tên nhà hàng hoặc quán"
+                   name="name"/>
+            <label for="name">Tên nhà hàng hoặc quán</label>
+        </div>
+
+        <div class="form-floating mt-3 mb-3">
+            <select name="type" class="form-select form-select-sm" aria-label=".form-select-sm example">
+                <option value="eatery" selected>Quán ăn</option>
+                <option value="restaurant">Nhà hàng</option>
+            </select>
+        </div>
+
+        <div class="form-floating mb-3 mt-3">
+            <input required type="text" class="form-control" id="location" placeholder="Tên nhà hàng hoặc quán"
+                   name="location"/>
+            <label for="name">Địa chỉ</label>
+        </div>
+
+
+        <div class="form-floating mb-3 mt-3">
+            <input required type="text" class="form-control" id="introduce" placeholder="Giới thiệu quán"
+                   name="introduce"/>
+            <label for="name">Giới thiệu quán</label>
+        </div>
+
+
+        <div class="form-floating mb-3 mt-3">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="multiSelectDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Loại món ăn
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
+                    <li>
+                        <div class="form-check">
+                            <input name="categories[]" class="form-check-input" type="checkbox" value="Món chính" id="option1">
+                            <label class="form-check-label" for="option1">Món ăn chính</label>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="form-check">
+                            <input name="categories[]" class="form-check-input" type="checkbox" value="Món nước" id="option2">
+                            <label class="form-check-label" for="option2">Món nước</label>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="form-check">
+                            <input name="categories[]" class="form-check-input" type="checkbox" value="Món tráng miệng" id="option3">
+                            <label class="form-check-label" for="option3">Món tráng miệng</label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-floating mt-3 mb-3">
+            <input type="file" class="form-control" id="avatar" name="avatar">
+            <label for="avatar">Ảnh đại diện quán</label>
+        </div>
+
+        <div class="d-flex justify-content-start mt-3 mb-3">
+            <div class="form-floating">
+                <button class="btn btn-danger">Xác nhận</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+{%endblock%}

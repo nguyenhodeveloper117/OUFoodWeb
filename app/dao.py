@@ -24,7 +24,7 @@ def get_user_by_id(id):
     return User.query.get(id)
 
 
-def add_user(name, username, password, email, phone, address=None, avatar=None):
+def add_user(name, username, password, email, phone, role, address=None, avatar=None):
     password = hashlib.md5(password.encode('utf-8')).hexdigest()
 
     u = User(
@@ -33,7 +33,8 @@ def add_user(name, username, password, email, phone, address=None, avatar=None):
         password=password,
         email=email,
         phone=phone,
-        address=address
+        address=address,
+        role=role
     )
 
     if avatar:
@@ -42,7 +43,7 @@ def add_user(name, username, password, email, phone, address=None, avatar=None):
 
     db.session.add(u)
     db.session.commit()
-
+    return u.id
 
 def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
@@ -311,8 +312,8 @@ def add_tenant(user_id, plan_id):
         db.session.add(tenant)
         db.session.commit()
 
-    subscription = db.session.query(Subscription).filter(Subscription.tenant_id == tenant.id and Subscription.end_date >= datetime.now())
-
+    subscription = db.session.query(Subscription).filter(Subscription.tenant_id == tenant.id and Subscription.end_date >= datetime.now()).first()
+    print(subscription)
     if subscription:
         return -1
 
@@ -325,3 +326,37 @@ def add_tenant(user_id, plan_id):
     db.session.add(subscription)
     db.session.commit()
 
+
+def add_infor_restaurant(name, type, location, introduce, categories, owner_restaurant_id, avatar):
+
+    restaurant = Restaurant(
+        name = name,
+        type = type,
+        location = location,
+        introduce = introduce,
+        user_id = owner_restaurant_id
+    )
+
+    if avatar:
+        res = cloudinary.uploader.upload(avatar)
+        restaurant.avatar = res.get('secure_url')
+
+    if restaurant:
+
+        db.session.add(restaurant)
+        db.session.commit()
+
+        for category in categories:
+            cuisine_type = CuisineType(
+                name=category,
+                restaurant_id = restaurant.id
+            )
+            if cuisine_type:
+                db.session.add(cuisine_type)
+                db.session.commit()
+
+        add_tenant(owner_restaurant_id, 1)
+        return True
+
+def get_restaurant_id(user_id):
+    return db.session.query(Restaurant.id).filter(Restaurant.user_id == user_id).first()

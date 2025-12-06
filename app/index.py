@@ -142,6 +142,22 @@ def logout_process():
     logout_user()
     return redirect('/login')
 
+@app.route("/infor/restaurant", methods=['get', 'post'])
+def add_infor_restaurant():
+    err_msg = None
+    if request.method == 'POST':
+        data_restaurant = {
+            'name': request.form.get('name'),
+            'type': request.form.get('type'),
+            'location':request.form.get('location'),
+            'introduce': request.form.get('introduce'),
+            'categories': request.form.getlist('categories[]'),
+        }
+        user_id = session.get('user_id')
+        avatar = request.files.get('avatar')
+        if dao.add_infor_restaurant(data_restaurant["name"], data_restaurant["type"], data_restaurant["location"], data_restaurant["introduce"], data_restaurant["categories"], user_id, avatar):
+            return redirect("/login")
+    return render_template('/manager/add_info_restaurant.html', err_msg=err_msg)
 
 @app.route('/register', methods=['get', 'post'])
 @decorators.logged_in_user
@@ -157,10 +173,14 @@ def register_process():
                 'password': password,
                 'email': request.form.get('email'),
                 'phone': request.form.get('phone'),
-                'address': request.form.get('address')
+                'address': request.form.get('address'),
+                'role': request.form.get('role')
             }
             avatar = request.files.get('avatar')
-            add_user(avatar=avatar, **data)
+            user_id = add_user(avatar=avatar, **data)
+            session['user_id'] = user_id
+            if data["role"] == "MANAGER":
+                return redirect('/infor/restaurant')
             return redirect('/login')
         else:
             err_msg = 'Mật khẩu KHÔNG khớp!'
@@ -498,7 +518,8 @@ def update_status_order_approve():
 @decorators.manager_required
 def view_cuisine_manager():
     cuisines = dao.get_cuisine(current_user.id)
-    return render_template("manager/cuisine_manager.html", cuisines=cuisines)
+    restaurant_id = dao.get_restaurant_id(current_user.id)
+    return render_template("manager/cuisine_manager.html", cuisines=cuisines, restaurant_id=restaurant_id)
 
 
 @app.route("/api/manager/delete/cuisine", methods=['DELETE'])
@@ -515,6 +536,7 @@ def cuisine_delete():
 def cuisine_add(restaurant_id):
     err_msg = None
     cuisines_type = dao.get_cuisine_type(restaurant_id)
+    print(restaurant_id[0])
     if request.method == "POST":
         cuisine_name = request.form.get("name")
         cuisine_description = request.form.get("description")
