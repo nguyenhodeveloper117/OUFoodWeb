@@ -190,7 +190,7 @@ class Restaurant(BaseModel):
     def __str__(self):
         return f"{self.id} - {self.name}"
 
-
+# Thue
 class Tenant(BaseModel):
     __tablename__ = "tenant"
     __table_args__ = {'extend_existing': True}
@@ -200,6 +200,7 @@ class Tenant(BaseModel):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref='Tenant')
 
+# Ke hoach
 class Plan(BaseModel):
     __tablename__ = "plan"
     __table_args__ = {'extend_existing': True}
@@ -211,7 +212,7 @@ class Plan(BaseModel):
     max_food = db.Column(db.Integer, nullable=False)
     time = db.Column(db.Integer, nullable=False, default=30)
 
-
+# Goi dang ki
 class Subscription(BaseModel):
     __tablename__ = 'subscription'
     __table_args__ = {'extend_existing': True}
@@ -225,6 +226,7 @@ class Subscription(BaseModel):
     tenant = db.relationship('Tenant', backref='Subscription')
     plan = db.relationship('Plan', backref='Subscription')
 
+# Thanh toan goi dang ki
 class SaasPayment(BaseModel):
     __tablename__ = 'SaasPayment'
     __table_args__ = {'extend_existing': True}
@@ -386,7 +388,7 @@ if __name__ == '__main__':
 
         #Tạo Plan
         plan1 = Plan(name="Free", description="Gói free cho phép người dùng sử dụng thử trong vòng 30 ngày và cho được phép thêm tối đa 3 món ăn", price=0, max_food=3)
-        plan2 = Plan(name="Basic", description="Gói free cho phép người dùng sử dụng trong vòng 30 ngày và cho được phép thêm tối đa 5 món ăn", price=100000, max_food=5)
+        plan2 = Plan(name="Basic", description="Gói Basic cho phép người dùng sử dụng trong vòng 30 ngày và cho được phép thêm tối đa 5 món ăn", price=100000, max_food=5)
         plan3 = Plan(name="Pro", description="Gói free cho phép người dùng sử dụng thử trong vòng 90 ngày và cho được phép thêm tối đa 10 món ăn", price=300000, max_food=10)
         plan4 = Plan(name="Vip", description="Gói free cho phép người dùng sử dụng thử trong vòng 180 ngày và cho được phép thêm tối đa 50 món ăn", price=500000, max_food=50)
         db.session.add_all([plan1, plan2, plan3, plan4])

@@ -154,6 +154,23 @@ class PaymentAdminView(AuthenticatedAdminView):
     column_filters = ['status']
     column_sortable_list = ['id', 'total', 'order_id', 'created_date', 'updated_date']
 
+class TenantAdminView(AuthenticatedAdminView):
+    column_list = ['id', 'status', 'user_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'user_id']
+
+class PlanAdminView(AuthenticatedAdminView):
+    column_list = ['id', 'name', 'description', 'price', 'max_food', 'time' , 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'max_food']
+
+class SubscriptionAdminView(AuthenticatedAdminView):
+    column_list = ['id', 'end_date', 'status', 'tenant_id', 'plan_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'tenant_id']
+
+class SaasPaymentAdminView(AuthenticatedAdminView):
+    column_list = ['id', 'payment_method', 'payment_amount', 'status', 'subscription_id', 'created_date', 'updated_date']
+    column_searchable_list = ['id', 'status']
+
+
 # ====== KHỞI TẠO ADMIN ======
 admin = Admin(app=app, name='OUFood Admin', template_mode='bootstrap4', index_view=MyAdminIndexView())
 
@@ -166,5 +183,9 @@ admin.add_view(ReviewAdminView(Review, db.session, name="Đánh giá"))
 admin.add_view(OrderAdminView(Order, db.session, name="Đơn hàng"))
 admin.add_view(OrderDetailAdminView(OrderDetail, db.session, name="Chi tiết đơn hàng"))
 admin.add_view(PaymentAdminView(Payment, db.session, name="Thanh toán"))
+admin.add_view(TenantAdminView(Tenant, db.session, name="Tenant"))
+admin.add_view(PlanAdminView(Plan, db.session, name="Plan"))
+admin.add_view(SubscriptionAdminView(Subscription, db.session, name="Subscription"))
+admin.add_view(SaasPaymentAdminView(SaasPayment, db.session, name="SaasPayment"))
 admin.add_view(StatsView(name='Thống kê'))
 admin.add_view(LogoutView(name='Đăng xuất'))
