@@ -567,5 +567,11 @@ def rate_restaurant():
     return jsonify({'result': "true"})
 
 
+#Sử lý saas
+@app.route("/manager/packages")
+def packages():
+    plan_packages = dao.get_packages()
+    return render_template("packages.html", packages=plan_packages)
+
 if __name__ == "__main__":
     app.run(host="localhost", port=8000, debug=True)

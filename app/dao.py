@@ -1,11 +1,11 @@
 import hashlib
 import cloudinary.uploader
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import  datetime
+from datetime import  datetime, timedelta
 from app import app, db
 
 from models import User, Order, Payment, OrderDetail, Cuisine, OrderStatus, Restaurant, CuisineType, Review, \
-    PaymentStatus
+    PaymentStatus, Plan, Tenant, Subscription, SaasPayment
 from sqlalchemy import func, DateTime
 
 
@@ -294,3 +294,34 @@ def add_review(restaurant_id, star, content, user_id):
     )
     db.session.add(review)
     db.session.commit()
+
+
+def get_packages():
+    return db.session.query(Plan).all()
+
+
+def add_tenant(user_id, plan_id):
+    tenant = db.session.query(Tenant).filter(Tenant.id == user_id).first()
+    if tenant is None:
+        tenant = Tenant(
+            user_id=user_id,
+            status=True
+        )
+
+        db.session.add(tenant)
+        db.session.commit()
+
+    subscription = db.session.query(Subscription).filter(Subscription.tenant_id == tenant.id and Subscription.end_date >= datetime.now())
+
+    if subscription:
+        return -1
+
+    number_days = db.session.query(Plan.time).filter(Plan.id == plan_id).scalar() or 0
+    subscription = Subscription(
+        plan_id = plan_id,
+        tenant_id = tenant.id,
+        end_date = datetime.now() + timedelta(days=number_days)
+    )
+    db.session.add(subscription)
+    db.session.commit()
+
